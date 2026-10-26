@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-[#F7F7F5]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduSpace - Plateforme de Révision Personnelle</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            notion: {
+              bg: '#F7F7F5',
+              card: '#FFFFFF',
+              border: '#E9E9E7',
+              borderDark: '#D3D3D0',
+              text: '#191919',
+              textMuted: '#787774',
+              hover: '#EFEFEA',
+              redBg: '#FDEBEC',
+              redText: '#EB5757',
+              blueBg: '#E8F3FE',
+              blueText: '#2B6CB0'
+            },
+            // Flashcard Palette
+            fc: {
+              navy: '#142B5B',
+              yellow: '#FFC928',
+              coral: '#FF6B8A',
+              mint: '#55DDB5',
+              violet: '#A78BFA',
+              emerald: '#10A77A',
+              rectoBg: '#FFFCF5',
+              versoBg: '#F4FFF9',
+              secondaryBg: '#F0F3FA',
+              rememberBg: '#E6FAF3'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F7F7F5;
+      color: #142B5B;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 3D Flip Card Effect */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Custom highlight underline effect */
+    .highlight-yellow {
+      background: linear-gradient(180deg, transparent 60%, rgba(255, 201, 40, 0.5) 60%);
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(120, 119, 116, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(120, 119, 116, 0.5);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col antialiased selection:bg-notion-hover">
+
+  <!-- APP CONTAINER -->
+  <div id="app" class="flex-1 flex flex-col min-h-screen">
+    
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-30 border-b border-notion-border bg-[#F7F7F5]/90 backdrop-blur-md px-4 lg:px-8 py-3">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        
+        <!-- Left: Logo & Breadcrumbs -->
+        <div class="flex items-center gap-3 overflow-hidden">
+          <a href="#" onclick="navigateTo('subjects'); return false;" class="flex items-center gap-2 font-semibold text-sm tracking-tight text-notion-text shrink-0 hover:opacity-80 transition">
+            <div class="w-7 h-7 rounded-lg bg-notion-text text-white flex items-center justify-center font-bold text-xs shadow-sm">
+              E
+            </div>
+            <span class="hidden sm:inline">EduSpace</span>
+          </a>
+
+          <div class="h-4 w-px bg-notion-border shrink-0"></div>
+
+          <!-- Breadcrumbs -->
+          <nav id="breadcrumbs" class="flex items-center text-xs text-notion-textMuted overflow-x-auto whitespace-nowrap py-1">
+            <!-- Dynamic breadcrumbs -->
+          </nav>
+        </div>
+
+        <!-- Right: Search & Admin Toggle -->
+        <div class="flex items-center gap-3 shrink-0">
+          
+          <!-- Sync Indicator -->
+          <div id="syncStatus" class="hidden sm:flex items-center gap-1.5 text-xs text-notion-textMuted px-2 py-1 rounded-md bg-white/50 border border-notion-border">
+            <i data-lucide="cloud" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span class="text-[11px]">Connecté à la BDD</span>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="relative hidden sm:block w-44 md:w-64">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-notion-textMuted"></i>
+            <input 
+              type="text" 
+              id="globalSearch" 
+              placeholder="Rechercher..." 
+              oninput="handleSearch(this.value)"
+              class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-notion-border rounded-lg outline-none focus:border-notion-borderDark transition"
+            />
+            <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-notion-border rounded-xl shadow-lg max-h-60 overflow-y-auto z-50 p-1"></div>
+          </div>
+
+          <!-- Admin Status / Toggle Button -->
+          <button id="adminBtn" onclick="openAdminModal()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover text-notion-text transition bg-white shadow-sm">
+            <i data-lucide="lock" id="adminLockIcon" class="w-3.5 h-3.5"></i>
+            <span id="adminBtnText">Déverrouiller Admin</span>
+          </button>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
+      
+      <!-- ADMIN BANNER (IF LOGGED IN) -->
+      <div id="adminBanner" class="hidden mb-6 p-3 bg-amber-500/10 border border-amber-500/20 text-amber-800 rounded-xl flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-amber-600"></i>
+          <span><strong>Mode Admin Activé</strong> — Vous pouvez créer, éditer et supprimer des matières, chapitres, PDF et flashcards.</span>
+        </div>
+        <button onclick="logoutAdmin()" class="underline font-medium hover:opacity-80">Déconnexion</button>
+      </div>
+
+      <!-- VIEWS CONTAINER -->
+      <div id="viewContainer"></div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-notion-border py-6 px-4 text-center text-xs text-notion-textMuted">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p>© <span id="year"></span> EduSpace • Organisateur d'études et révision</p>
+        <div class="flex items-center gap-4">
+          <button onclick="exportData()" class="hover:text-notion-text transition">Exporter la sauvegarde</button>
+          <span>•</span>
+          <button onclick="confirmResetAll()" class="hover:text-notion-redText transition">Réinitialiser les données</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MODAL: ADMIN LOGIN -->
+  <div id="loginModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-notion-border rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
+      <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-notion-textMuted hover:text-notion-text">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-notion-hover flex items-center justify-center text-notion-text">
+          <i data-lucide="key-round" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-sm">Connexion Administrateur</h3>
+          <p class="text-xs text-notion-textMuted">Saisissez le mot de passe admin.</p>
+        </div>
+      </div>
+
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <input 
+            type="password" 
+            id="adminPasswordInput" 
+            placeholder="Mot de passe" 
+            required 
+            class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark transition"
+          />
+          <p id="loginError" class="text-xs text-notion-redText mt-1 hidden">Mot de passe incorrect.</p>
+        </div>
+        <button type="submit" class="w-full py-2 bg-notion-text hover:opacity-90 text-white text-xs font-semibold rounded-lg transition shadow-sm">
+          Se connecter
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRMATION MODAL -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-notion-border rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-9 h-9 rounded-xl bg-notion-redBg text-notion-redText flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 id="confirmTitle" class="font-semibold text-sm text-notion-text">Confirmer la suppression</h3>
+        </div>
+      </div>
+      <p id="confirmMessage" class="text-xs text-notion-textMuted mb-5 leading-relaxed">Êtes-vous sûr de vouloir effectuer cette action ?</p>
+      
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeModal('confirmModal')" class="px-3.5 py-1.5 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover">Annuler</button>
+        <button type="button" id="confirmActionBtn" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-notion-redText hover:opacity-90 rounded-lg shadow-sm">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT SUBJECT -->
+  <div id="subjectModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-notion-border rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+      <button onclick="closeModal('subjectModal')" class="absolute top-4 right-4 text-notion-textMuted hover:text-notion-text">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <h3 id="subjectModalTitle" class="font-semibold text-base mb-4">Ajouter une Matière</h3>
+
+      <form onsubmit="saveSubject(event)" class="space-y-4">
+        <input type="hidden" id="subjectIdInput">
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Nom de la matière</label>
+          <input type="text" id="subjectNameInput" required placeholder="ex: Informatique" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Icône (Lucide ou Emoji)</label>
+          <input type="text" id="subjectIconInput" placeholder="ex: code, monitor, 💻" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Description courte</label>
+          <textarea id="subjectDescInput" rows="2" placeholder="Optionnel..." class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('subjectModal')" class="px-4 py-2 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover">Annuler</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-notion-text rounded-lg hover:opacity-90">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT CHAPTER -->
+  <div id="chapterModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-notion-border rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+      <button onclick="closeModal('chapterModal')" class="absolute top-4 right-4 text-notion-textMuted hover:text-notion-text">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <h3 id="chapterModalTitle" class="font-semibold text-base mb-4">Ajouter un Chapitre</h3>
+
+      <form onsubmit="saveChapter(event)" class="space-y-4">
+        <input type="hidden" id="chapterSubjectIdInput">
+        <input type="hidden" id="chapterIdInput">
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Titre du chapitre</label>
+          <input type="text" id="chapterTitleInput" required placeholder="ex: Chapitre 1 - Structures de données" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Description / Objectifs</label>
+          <textarea id="chapterDescInput" rows="2" placeholder="Optionnel..." class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('chapterModal')" class="px-4 py-2 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover">Annuler</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-notion-text rounded-lg hover:opacity-90">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT RESOURCE (PDF) -->
+  <div id="resourceModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-notion-border rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+      <button onclick="closeModal('resourceModal')" class="absolute top-4 right-4 text-notion-textMuted hover:text-notion-text">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <h3 id="resourceModalTitle" class="font-semibold text-base mb-1">Ajouter / Modifier le PDF</h3>
+      <p id="resourceModalSubtitle" class="text-xs text-notion-textMuted mb-4">Téléversez un fichier PDF ou fournissez son lien URL.</p>
+
+      <form onsubmit="saveResource(event)" class="space-y-4">
+        <input type="hidden" id="resourceSubjectId">
+        <input type="hidden" id="resourceChapterId">
+        <input type="hidden" id="resourceType">
+
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Titre du document</label>
+          <input type="text" id="resourceTitleInput" required placeholder="ex: Support principal du cours" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Importer un fichier PDF local</label>
+          <input type="file" id="resourceFileInput" accept="application/pdf" onchange="handleFileSelect(event)" class="w-full text-xs text-notion-textMuted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-notion-hover file:text-notion-text hover:file:bg-notion-border cursor-pointer">
+        </div>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-notion-border"></div>
+          <span class="flex-shrink mx-2 text-[10px] uppercase tracking-wider text-notion-textMuted">ou via lien web</span>
+          <div class="flex-grow border-t border-notion-border"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">URL Web du PDF</label>
+          <input type="url" id="resourceUrlInput" placeholder="https://exemple.com/cours.pdf" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('resourceModal')" class="px-4 py-2 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover">Annuler</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-notion-text rounded-lg hover:opacity-90">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT FLASHCARD -->
+  <div id="flashcardModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-notion-border rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('flashcardModal')" class="absolute top-4 right-4 text-notion-textMuted hover:text-notion-text">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <h3 id="flashcardModalTitle" class="font-semibold text-base text-fc-navy mb-1">Flashcard</h3>
+      <p class="text-xs text-notion-textMuted mb-4">Créez la question (Recto) et la réponse détaillée avec 'À retenir' et exemples facultatifs.</p>
+
+      <form onsubmit="saveFlashcard(event)" class="space-y-4">
+        <input type="hidden" id="fcSubjectId">
+        <input type="hidden" id="fcChapterId">
+        <input type="hidden" id="fcIndex" value="-1">
+
+        <div>
+          <label class="block text-xs font-semibold text-fc-navy mb-1">Question / Recto</label>
+          <textarea id="fcQuestionInput" required rows="3" placeholder="Saisissez la question..." class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-fc-navy"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-fc-navy mb-1">Réponse principale / Verso</label>
+          <textarea id="fcAnswerInput" required rows="3" placeholder="Saisissez la réponse détaillée..." class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-fc-navy"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-fc-navy mb-1">Bloc « À retenir » (Optionnel)</label>
+          <input type="text" id="fcRememberInput" placeholder="ex: L'élément clé à mémoriser absolu" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-fc-navy">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-fc-navy mb-1">Exemple ou Formule (Optionnel)</label>
+          <input type="text" id="fcExampleInput" placeholder="ex: FRNG = Ressources Stables - Emplois Stables" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-fc-navy">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('flashcardModal')" class="px-4 py-2 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover">Annuler</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-fc-navy rounded-lg hover:opacity-90">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // --- API ENDPOINT ---
+    const API_URL = "https://script.google.com/macros/s/AKfycbwwovn4rVG_rTHiXblL-tISlbgkQC3XsLu38cgzwcmMS8VEUrZ3zkQWDomNu6I405DjgA/exec";
+
+    // --- INITIAL DEMO DATA ---
+    const DEFAULT_DATA = {
+      subjects: [
+        {
+          id: 'sub_math',
+          name: 'Mathématiques',
+          icon: 'calculator',
+          description: 'Analyse, Algèbre linéaire et Probabilités.',
+          chapters: [
+            {
+              id: 'chap_math_1',
+              title: 'Analyse - Intégrales & Séries',
+              description: 'Propriétés des intégrales définies, séries numériques et convergence.',
+              resources: {
+                course: { title: 'Cours d\'Intégration PDF', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                exercises: { title: 'Série d\'exercices 01', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                correction: { title: 'Correction d\'exercices 01', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                flashcards: [
+                  { 
+                    question: "Quelle est la définition d'une série convergente ?", 
+                    answer: "Une série numérique est dite convergente si la suite de ses sommes partielles (Sn) admet une limite finie L dans ℝ ou ℂ.",
+                    remember: "Convergence ⇔ Limite finie de la suite des sommes partielles (Sn).",
+                    example: "Exemple: ∑ (1/2)^n converge vers 2."
+                  },
+                  { 
+                    question: "Quelle est la formule de l'intégration par parties (IPP) ?", 
+                    answer: "Pour deux fonctions u et v dérivables à dérivées continues sur un intervalle [a, b] :",
+                    remember: "On dérive l'une (u) et on intègre l'autre (v') pour simplifier l'intégrale.",
+                    example: "∫[a,b] u(t)v'(t) dt = [u(t)v(t)][a,b] - ∫[a,b] u'(t)v(t) dt"
+                  },
+                  { 
+                    question: "Règle de d'Alembert pour les séries à termes positifs ?", 
+                    answer: "Si lim |a_{n+1}/a_n| = L < 1, la série converge absolument. Si L > 1, elle diverge.",
+                    remember: "L < 1 : Converge | L > 1 : Diverge | L = 1 : Indéterminé.",
+                    example: ""
+                  }
+                ]
+              }
+            },
+            {
+              id: 'chap_math_2',
+              title: 'Algèbre - Espaces Vectoriels',
+              description: 'Bases, dimensions, applications linéaires et matrices.',
+              resources: {
+                course: { title: '', url: '' },
+                exercises: { title: '', url: '' },
+                correction: { title: '', url: '' },
+                flashcards: [
+                  { 
+                    question: "Qu'est-ce qu'un sous-espace vectoriel ?", 
+                    answer: "Un sous-ensemble F d'un espace vectoriel E non vide, stable par addition et stable par multiplication par un scalaire.",
+                    remember: "0_E ∈ F et (∀ x,y ∈ F, ∀ λ,μ ∈ ℝ ⇒ λx + μy ∈ F).",
+                    example: ""
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          id: 'sub_gestion',
+          name: 'Management & Gestion',
+          icon: 'trending-up',
+          description: 'Analyse financière, comptabilité et stratégie d\'entreprise.',
+          chapters: [
+            {
+              id: 'chap_gest_1',
+              title: 'Analyse Financière & Bilan',
+              description: 'Structure du bilan, Fonds de Roulement (FRNG) et BFR.',
+              resources: {
+                course: { title: 'Support de cours - Finance', url: '' },
+                exercises: { title: '', url: '' },
+                correction: { title: '', url: '' },
+                flashcards: [
+                  { 
+                    question: "Comment calcule-t-on le Fonds de Roulement Net Global (FRNG) ?", 
+                    answer: "Le FRNG mesure la ressource durable disponible pour financer les investissements et le besoin en fonds de roulement d'exploitation.",
+                    remember: "Un FRNG positif indique une structure financière saine et équilibrée.",
+                    example: "FRNG = Ressources Stables - Emplois Stables"
+                  },
+                  { 
+                    question: "Qu'est-ce que le BFR et comment se calcule-t-il ?", 
+                    answer: "Le Besoin en Fonds de Roulement représente le besoin financier généré par le décalage temporel entre les décaissements et les encaissements d'exploitation.",
+                    remember: "BFR > 0 nécessite d'être financé par le FRNG ou la trésorerie.",
+                    example: "BFR = Actif Circulant (hors trésorerie) - Passif Circulant (hors trésorerie)"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          id: 'sub_info',
+          name: 'Informatique',
+          icon: 'code',
+          description: 'Algorithmique, Structures de données et Développement Web.',
+          chapters: [
+            {
+              id: 'chap_info_1',
+              title: 'Algorithmique & Complexité',
+              description: 'Tri, recherche, notation Grand-O et structures de données.',
+              resources: {
+                course: { title: '', url: '' },
+                exercises: { title: '', url: '' },
+                correction: { title: '', url: '' },
+                flashcards: [
+                  { 
+                    question: "Quelle est la complexité temporelle moyenne et dans le pire des cas du Tri Rapide (Quicksort) ?", 
+                    answer: "En moyenne, Quicksort effectue un découpage équilibré. Dans le pire des cas (pivot mal choisi sur tableau déjà trié), la complexité se dégrade.",
+                    remember: "Moyenne : O(n log n) | Pire des cas : O(n²)",
+                    example: ""
+                  },
+                  { 
+                    question: "Qu'est-ce qu'une structure de données FIFO et LIFO ?", 
+                    answer: "FIFO (First In, First Out) caractérise les Files (Queue). LIFO (Last In, First Out) caractérise les Piles (Stack).",
+                    remember: "File = FIFO (File d'attente) | Pile = LIFO (Pile d'assiettes)",
+                    example: "File: push/pop_front | Pile: push/pop"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    // --- STATE MANAGEMENT ---
+    let state = {
+      data: null,
+      isAdmin: false,
+      currentView: 'subjects', // 'subjects', 'chapters', 'chapterDetail'
+      selectedSubjectId: null,
+      selectedChapterId: null,
+      activeTab: 'course', // 'course', 'flashcards', 'exercises', 'correction'
+      currentFcIndex: 0,
+      isFcFlipped: false,
+      tempUploadedDataUrl: null,
+      confirmCallback: null
+    };
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadStateFromStorage();
+      renderApp();
+      document.getElementById('year').textContent = new Date().getFullYear();
+    });
+
+    async function loadStateFromStorage() {
+      state.isAdmin = localStorage.getItem('eduspace_admin') === 'true';
+
+      try {
+        const res = await fetch(API_URL);
+        if (res.ok) {
+          const apiData = await res.json();
+          if (apiData && apiData.subjects && apiData.subjects.length > 0) {
+            state.data = apiData;
+            localStorage.setItem('eduspace_data', JSON.stringify(state.data));
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Erreur API ou Hors Ligne, chargement depuis LocalStorage:", err);
+      }
+
+      const saved = localStorage.getItem('eduspace_data');
+      if (saved) {
+        try {
+          state.data = JSON.parse(saved);
+        } catch (e) {
+          state.data = DEFAULT_DATA;
+        }
+      } else {
+        state.data = DEFAULT_DATA;
+        saveStateToStorage();
+      }
+    }
+
+    async function saveStateToStorage() {
+      localStorage.setItem('eduspace_data', JSON.stringify(state.data));
+
+      if (state.isAdmin && API_URL) {
+        try {
+          // Google Apps Script requires text/plain or no-cors mode for cross-origin POST requests without CORS preflight failures
+          await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify(state.data)
+          });
+        } catch (e) {
+          console.warn("Synchronisation Google Sheets non disponible. Données sauvegardées en local.", e);
+        }
+      }
+    }
+
+    // --- NAVIGATION ---
+    function navigateTo(view, subjectId = null, chapterId = null, tab = 'course') {
+      state.currentView = view;
+      state.selectedSubjectId = subjectId;
+      state.selectedChapterId = chapterId;
+      state.activeTab = tab;
+      state.currentFcIndex = 0;
+      state.isFcFlipped = false;
+      renderApp();
+    }
+
+    // --- RENDER APP ---
+    function renderApp() {
+      updateAdminUI();
+      renderBreadcrumbs();
+
+      const container = document.getElementById('viewContainer');
+      container.innerHTML = '';
+
+      if (state.currentView === 'subjects') {
+        container.appendChild(renderSubjectsView());
+      } else if (state.currentView === 'chapters') {
+        container.appendChild(renderChaptersView());
+      } else if (state.currentView === 'chapterDetail') {
+        container.appendChild(renderChapterDetailView());
+      }
+
+      lucide.createIcons();
+    }
+
+    function updateAdminUI() {
+      const adminBtnText = document.getElementById('adminBtnText');
+      const adminLockIcon = document.getElementById('adminLockIcon');
+      const adminBanner = document.getElementById('adminBanner');
+
+      if (state.isAdmin) {
+        adminBtnText.textContent = "Admin Activé";
+        adminLockIcon.setAttribute('data-lucide', 'unlock');
+        adminBanner.classList.remove('hidden');
+      } else {
+        adminBtnText.textContent = "Déverrouiller Admin";
+        adminLockIcon.setAttribute('data-lucide', 'lock');
+        adminBanner.classList.add('hidden');
+      }
+    }
+
+    function renderBreadcrumbs() {
+      const bc = document.getElementById('breadcrumbs');
+      bc.innerHTML = '';
+
+      let html = `<a href="#" onclick="navigateTo('subjects'); return false;" class="hover:text-notion-text transition">Accueil</a>`;
+
+      if (state.selectedSubjectId) {
+        const sub = state.data.subjects.find(s => s.id === state.selectedSubjectId);
+        if (sub) {
+          html += ` <i data-lucide="chevron-right" class="w-3 h-3 mx-1 opacity-50 inline"></i> `;
+          if (state.currentView === 'chapters') {
+            html += `<span class="font-medium text-notion-text">${escapeHtml(sub.name)}</span>`;
+          } else {
+            html += `<a href="#" onclick="navigateTo('chapters', '${sub.id}'); return false;" class="hover:text-notion-text transition">${escapeHtml(sub.name)}</a>`;
+          }
+        }
+      }
+
+      if (state.selectedChapterId && state.selectedSubjectId) {
+        const sub = state.data.subjects.find(s => s.id === state.selectedSubjectId);
+        const chap = sub?.chapters.find(c => c.id === state.selectedChapterId);
+        if (chap) {
+          html += ` <i data-lucide="chevron-right" class="w-3 h-3 mx-1 opacity-50 inline"></i> `;
+          html += `<span class="font-medium text-notion-text truncate max-w-[150px] sm:max-w-none inline-block align-bottom">${escapeHtml(chap.title)}</span>`;
+        }
+      }
+
+      bc.innerHTML = html;
+    }
+
+    // --- VIEW 1: SUBJECTS ---
+    function renderSubjectsView() {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-6';
+
+      wrapper.innerHTML = `
+        <div class="border-b border-notion-border pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-notion-text">Matières d'Étude</h1>
+            <p class="text-sm text-notion-textMuted mt-1">Sélectionnez une matière pour consulter les chapitres, cours et cartes mémoire.</p>
+          </div>
+          ${state.isAdmin ? `
+            <button onclick="openSubjectModal()" class="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-notion-text rounded-xl hover:opacity-90 transition shadow-sm self-start">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Nouvelle Matière
+            </button>
+          ` : ''}
+        </div>
+
+        <div id="subjectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      `;
+
+      const grid = wrapper.querySelector('#subjectsGrid');
+
+      if (!state.data || !state.data.subjects || state.data.subjects.length === 0) {
+        grid.className = "py-12 text-center text-notion-textMuted text-sm";
+        grid.innerHTML = "Aucune matière disponible. Activez le mode Admin pour en créer une.";
+        return wrapper;
+      }
+
+      state.data.subjects.forEach(subject => {
+        const totalChap = subject.chapters ? subject.chapters.length : 0;
+        let totalFc = 0;
+        subject.chapters?.forEach(c => {
+          if (c.resources?.flashcards) totalFc += c.resources.flashcards.length;
+        });
+
+        const card = document.createElement('div');
+        card.className = "group relative bg-white border border-notion-border rounded-2xl p-5 hover:border-notion-borderDark hover:shadow-md transition duration-150 flex flex-col justify-between cursor-pointer";
+        card.onclick = () => navigateTo('chapters', subject.id);
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-notion-hover flex items-center justify-center text-notion-text text-lg font-bold group-hover:scale-105 transition">
+                ${renderIconOrEmoji(subject.icon)}
+              </div>
+              ${state.isAdmin ? `
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition" onclick="event.stopPropagation()">
+                  <button onclick="openSubjectModal('${subject.id}')" title="Éditer" class="p-1.5 text-notion-textMuted hover:text-notion-text rounded-md hover:bg-notion-hover">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="confirmDeleteSubject('${subject.id}')" title="Supprimer" class="p-1.5 text-notion-redText hover:bg-notion-redBg rounded-md">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+
+            <h3 class="font-semibold text-base text-notion-text group-hover:text-blue-600 transition">${escapeHtml(subject.name)}</h3>
+            <p class="text-xs text-notion-textMuted mt-1 line-clamp-2">${escapeHtml(subject.description || 'Aucune description')}</p>
+          </div>
+
+          <div class="pt-5 mt-4 border-t border-notion-border flex items-center justify-between text-xs text-notion-textMuted font-medium">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+              ${totalChap} Chapitre${totalChap > 1 ? 's' : ''}
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+              ${totalFc} Flashcard${totalFc > 1 ? 's' : ''}
+            </span>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+
+      return wrapper;
+    }
+
+    // --- VIEW 2: CHAPTERS ---
+    function renderChaptersView() {
+      const subject = state.data.subjects.find(s => s.id === state.selectedSubjectId);
+      if (!subject) return renderSubjectsView();
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-6';
+
+      wrapper.innerHTML = `
+        <div class="border-b border-notion-border pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <button onclick="navigateTo('subjects')" class="inline-flex items-center gap-1 text-xs text-notion-textMuted hover:text-notion-text mb-2 transition">
+              <i data-lucide="arrow-left" class="w-3 h-3"></i> Retour aux matières
+            </button>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-white border border-notion-border flex items-center justify-center font-bold text-sm">
+                ${renderIconOrEmoji(subject.icon)}
+              </div>
+              <h1 class="text-2xl font-bold tracking-tight text-notion-text">${escapeHtml(subject.name)}</h1>
+            </div>
+          </div>
+
+          ${state.isAdmin ? `
+            <button onclick="openChapterModal('${subject.id}')" class="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-notion-text rounded-xl hover:opacity-90 transition shadow-sm self-start">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Nouveau Chapitre
+            </button>
+          ` : ''}
+        </div>
+
+        <div id="chaptersList" class="space-y-3"></div>
+      `;
+
+      const list = wrapper.querySelector('#chaptersList');
+
+      if (!subject.chapters || subject.chapters.length === 0) {
+        list.className = "py-12 text-center text-notion-textMuted text-sm";
+        list.innerHTML = "Aucun chapitre dans cette matière.";
+        return wrapper;
+      }
+
+      subject.chapters.forEach((chap, idx) => {
+        const fcCount = chap.resources?.flashcards?.length || 0;
+        const hasCourse = !!chap.resources?.course?.url;
+        const hasEx = !!chap.resources?.exercises?.url;
+        const hasCorr = !!chap.resources?.correction?.url;
+
+        const row = document.createElement('div');
+        row.className = "group bg-white border border-notion-border rounded-xl p-4 hover:border-notion-borderDark transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer shadow-xs";
+        row.onclick = () => navigateTo('chapterDetail', subject.id, chap.id);
+
+        row.innerHTML = `
+          <div class="flex items-start gap-3">
+            <div class="w-7 h-7 rounded-lg bg-notion-hover text-notion-textMuted font-medium text-xs flex items-center justify-center shrink-0 mt-0.5">
+              ${idx + 1}
+            </div>
+            <div>
+              <h3 class="font-semibold text-sm text-notion-text group-hover:text-blue-600 transition">${escapeHtml(chap.title)}</h3>
+              <p class="text-xs text-notion-textMuted mt-0.5 line-clamp-1">${escapeHtml(chap.description || 'Pas de description')}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-notion-border">
+            <div class="flex items-center gap-1.5 text-xs">
+              <span class="px-2 py-0.5 rounded font-medium ${hasCourse ? 'bg-emerald-500/10 text-emerald-700' : 'bg-notion-hover text-notion-textMuted'}">Cours</span>
+              <span class="px-2 py-0.5 rounded font-medium ${fcCount > 0 ? 'bg-blue-500/10 text-blue-700' : 'bg-notion-hover text-notion-textMuted'}">${fcCount} Flashcards</span>
+              <span class="px-2 py-0.5 rounded font-medium ${hasEx ? 'bg-amber-500/10 text-amber-700' : 'bg-notion-hover text-notion-textMuted'}">Exos</span>
+              <span class="px-2 py-0.5 rounded font-medium ${hasCorr ? 'bg-purple-500/10 text-purple-700' : 'bg-notion-hover text-notion-textMuted'}">Corr</span>
+            </div>
+
+            ${state.isAdmin ? `
+              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                <button onclick="openChapterModal('${subject.id}', '${chap.id}')" title="Éditer" class="p-1.5 text-notion-textMuted hover:text-notion-text rounded-md hover:bg-notion-hover">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="confirmDeleteChapter('${subject.id}', '${chap.id}')" title="Supprimer" class="p-1.5 text-notion-redText hover:bg-notion-redBg rounded-md">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+
+        list.appendChild(row);
+      });
+
+      return wrapper;
+    }
+
+    // --- VIEW 3: CHAPTER DETAIL (PDF & FLASHCARDS) ---
+    function renderChapterDetailView() {
+      const subject = state.data.subjects.find(s => s.id === state.selectedSubjectId);
+      const chap = subject?.chapters.find(c => c.id === state.selectedChapterId);
+
+      if (!subject || !chap) return renderSubjectsView();
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-6';
+
+      wrapper.innerHTML = `
+        <div class="border-b border-notion-border pb-4">
+          <button onclick="navigateTo('chapters', '${subject.id}')" class="inline-flex items-center gap-1 text-xs text-notion-textMuted hover:text-notion-text mb-2 transition">
+            <i data-lucide="arrow-left" class="w-3 h-3"></i> Chapitres de ${escapeHtml(subject.name)}
+          </button>
+          <h1 class="text-2xl font-bold tracking-tight text-notion-text">${escapeHtml(chap.title)}</h1>
+          ${chap.description ? `<p class="text-xs text-notion-textMuted mt-1">${escapeHtml(chap.description)}</p>` : ''}
+
+          <!-- TAB NAVIGATION -->
+          <div class="flex items-center gap-2 mt-6 overflow-x-auto pb-1 border-b border-notion-border">
+            <button onclick="switchTab('course')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'course' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Cours PDF
+            </button>
+            <button onclick="switchTab('flashcards')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'flashcards' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
+              <i data-lucide="layers" class="w-3.5 h-3.5"></i> Flashcards (${chap.resources?.flashcards?.length || 0})
+            </button>
+            <button onclick="switchTab('exercises')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'exercises' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
+              <i data-lucide="dumbbell" class="w-3.5 h-3.5"></i> Série d'exercices
+            </button>
+            <button onclick="switchTab('correction')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'correction' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Correction PDF
+            </button>
+          </div>
+        </div>
+
+        <div id="tabContent"></div>
+      `;
+
+      const content = wrapper.querySelector('#tabContent');
+
+      if (state.activeTab === 'flashcards') {
+        content.appendChild(renderFlashcardsTab(subject.id, chap));
+      } else {
+        content.appendChild(renderPdfTab(subject.id, chap, state.activeTab));
+      }
+
+      return wrapper;
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      state.currentFcIndex = 0;
+      state.isFcFlipped = false;
+      renderApp();
+    }
+
+    // --- TAB 1: PDF VIEWER ---
+    function renderPdfTab(subjectId, chap, resourceType) {
+      const container = document.createElement('div');
+      container.className = "space-y-4";
+
+      const res = chap.resources ? chap.resources[resourceType] : null;
+      const pdfUrl = res ? res.url : '';
+      const title = res?.title || (resourceType === 'course' ? 'Cours' : resourceType === 'exercises' ? 'Exercices' : 'Correction');
+
+      const header = document.createElement('div');
+      header.className = "flex items-center justify-between bg-white border border-notion-border p-3 rounded-xl shadow-xs";
+      header.innerHTML = `
+        <div class="flex items-center gap-2 text-xs font-medium text-notion-text">
+          <i data-lucide="file-text" class="w-4 h-4 text-red-500"></i>
+          <span>${escapeHtml(title)}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          ${pdfUrl ? `
+            <a href="${pdfUrl}" target="_blank" download class="px-3 py-1.5 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover transition flex items-center gap-1 text-notion-text">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Télécharger
+            </a>
+          ` : ''}
+
+          ${state.isAdmin ? `
+            <button onclick="openResourceModal('${subjectId}', '${chap.id}', '${resourceType}')" class="px-3 py-1.5 text-xs font-semibold text-white bg-notion-text rounded-lg hover:opacity-90 transition flex items-center gap-1">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> ${pdfUrl ? 'Remplacer' : 'Importer'}
+            </button>
+            ${pdfUrl ? `
+              <button onclick="confirmDeletePdf('${subjectId}', '${chap.id}', '${resourceType}')" title="Supprimer ce PDF" class="px-3 py-1.5 text-xs font-semibold text-notion-redText bg-notion-redBg hover:opacity-90 rounded-lg transition flex items-center gap-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Supprimer PDF
+              </button>
+            ` : ''}
+          ` : ''}
+        </div>
+      `;
+      container.appendChild(header);
+
+      const viewer = document.createElement('div');
+      viewer.className = "w-full rounded-2xl border border-notion-border bg-white overflow-hidden shadow-xs";
+
+      if (pdfUrl) {
+        viewer.innerHTML = `
+          <div class="w-full h-[650px] relative bg-notion-bg">
+            <iframe src="${pdfUrl}" class="w-full h-full border-0" title="Visionneuse PDF"></iframe>
+          </div>
+        `;
+      } else {
+        viewer.innerHTML = `
+          <div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-notion-hover flex items-center justify-center text-notion-textMuted">
+              <i data-lucide="file-x" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-notion-text">Aucun document PDF associé</p>
+              <p class="text-xs text-notion-textMuted mt-1">Téléversez un fichier PDF depuis l'espace Admin.</p>
+            </div>
+            ${state.isAdmin ? `
+              <button onclick="openResourceModal('${subjectId}', '${chap.id}', '${resourceType}')" class="px-4 py-2 text-xs font-semibold text-white bg-notion-text rounded-xl hover:opacity-90 transition shadow-sm">
+                Ajouter un fichier PDF
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      container.appendChild(viewer);
+      return container;
+    }
+
+    // --- TAB 2: FLASHCARDS INTERFACE (DESIGN MINIMALISTE MODERNE & DYNAMIQUE) ---
+    function renderFlashcardsTab(subjectId, chap) {
+      const container = document.createElement('div');
+      container.className = "space-y-6 max-w-7xl mx-auto";
+
+      const flashcards = chap.resources?.flashcards || [];
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      const subjectName = (sub ? sub.name : 'MATIÈRE').toUpperCase();
+
+      // Top Control Bar
+      const topBar = document.createElement('div');
+      topBar.className = "flex items-center justify-between bg-white p-3.5 border border-notion-border rounded-2xl text-xs gap-3 shadow-xs";
+      topBar.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="font-semibold text-fc-navy bg-notion-hover px-3 py-1 rounded-lg">${flashcards.length} carte${flashcards.length > 1 ? 's' : ''}</span>
+          ${flashcards.length > 1 ? `
+            <button onclick="shuffleFlashcards('${subjectId}', '${chap.id}')" class="px-3 py-1.5 font-medium text-fc-navy bg-fc-yellow/20 hover:bg-fc-yellow/30 rounded-xl transition flex items-center gap-1.5">
+              <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Mélanger les cartes
+            </button>
+          ` : ''}
+        </div>
+
+        ${state.isAdmin ? `
+          <button onclick="openFlashcardModal('${subjectId}', '${chap.id}')" class="px-3.5 py-2 font-semibold text-white bg-fc-navy rounded-xl hover:opacity-90 transition flex items-center gap-1.5 shadow-xs">
+            <i data-lucide="plus" class="w-4 h-4"></i> Ajouter une Flashcard
+          </button>
+        ` : ''}
+      `;
+      container.appendChild(topBar);
+
+      if (flashcards.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = "bg-white border border-notion-border rounded-2xl p-12 text-center shadow-xs";
+        empty.innerHTML = `
+          <div class="w-12 h-12 bg-fc-yellow/20 text-fc-navy rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+          </div>
+          <p class="text-base font-semibold text-fc-navy">Aucune carte mémoire disponible</p>
+          <p class="text-xs text-notion-textMuted mt-1 mb-4">Créez des flashcards dynamiques pour booster la mémorisation.</p>
+          ${state.isAdmin ? `
+            <button onclick="openFlashcardModal('${subjectId}', '${chap.id}')" class="px-4 py-2 text-xs font-semibold text-white bg-fc-navy rounded-xl hover:opacity-90 transition shadow-sm">
+              Créer une Flashcard
+            </button>
+          ` : ''}
+        `;
+        container.appendChild(empty);
+        return container;
+      }
+
+      const total = flashcards.length;
+      if (state.currentFcIndex >= total) state.currentFcIndex = 0;
+      const current = flashcards[state.currentFcIndex];
+      const cardNumberFormatted = String(state.currentFcIndex + 1).padStart(2, '0');
+
+      const deck = document.createElement('div');
+      deck.className = "space-y-6";
+
+      deck.innerHTML = `
+        <!-- NAVIGATION HEADER & PROGRESS -->
+        <div class="flex items-center justify-between text-xs font-semibold text-fc-navy px-1">
+          <div class="flex items-center gap-2">
+            <span class="bg-fc-navy text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold tracking-wider">${cardNumberFormatted} / ${String(total).padStart(2, '0')}</span>
+            <span class="text-notion-textMuted hidden sm:inline">• Cliquez ou touchez la carte pour la retourner</span>
+          </div>
+          <button onclick="resetFlashcards()" class="hover:text-fc-coral transition flex items-center gap-1">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Recommencer
+          </button>
+        </div>
+
+        <div class="w-full h-2 bg-notion-border rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-fc-yellow via-fc-coral to-fc-mint transition-all duration-300" style="width: ${((state.currentFcIndex + 1) / total) * 100}%"></div>
+        </div>
+
+        <!-- FLASHCARDS CONTAINER (DESKTOP: SIDE-BY-SIDE / MOBILE: FLIP CARD) -->
+        
+        <!-- 1. DESKTOP & TABLET LANDSCAPE VIEW (Side by Side 16:10 Ratio, Max Width 1200px) -->
+        <div class="hidden lg:grid grid-cols-2 gap-6 max-w-[1200px] mx-auto w-full">
+          ${renderSingleCardHTML('recto', current, subjectName, cardNumberFormatted)}
+          ${renderSingleCardHTML('verso', current, subjectName, cardNumberFormatted)}
+        </div>
+
+        <!-- 2. MOBILE & PORTRAIT VIEW (Animated Flip Card 4:5 / 5:6 Ratio) -->
+        <div class="block lg:hidden max-w-md mx-auto w-full">
+          <div class="perspective-1000 w-full min-h-[440px] cursor-pointer group" onclick="toggleFlipCard()">
+            <div id="flashcardInner" class="relative w-full h-full duration-500 transform-style-3d ${state.isFcFlipped ? 'rotate-y-180' : ''}">
+              
+              <!-- RECTO PORTRAIT -->
+              <div class="absolute inset-0 w-full h-full backface-hidden">
+                ${renderSingleCardHTML('recto', current, subjectName, cardNumberFormatted, true)}
+              </div>
+
+              <!-- VERSO PORTRAIT -->
+              <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
+                ${renderSingleCardHTML('verso', current, subjectName, cardNumberFormatted, true)}
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTROLS ROW -->
+        <div class="flex items-center justify-between gap-3 max-w-md lg:max-w-xl mx-auto pt-2">
+          <button onclick="prevFlashcard()" ${state.currentFcIndex === 0 ? 'disabled' : ''} class="flex-1 py-3 px-4 rounded-2xl border border-notion-border bg-white font-semibold text-xs text-fc-navy hover:bg-notion-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-xs">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Précédente
+          </button>
+
+          <button onclick="toggleFlipCard()" title="Retourner la carte" class="lg:hidden px-5 py-3 rounded-2xl border border-fc-navy bg-fc-navy text-white font-semibold text-xs hover:opacity-90 transition shadow-xs flex items-center gap-1.5">
+            <i data-lucide="rotate-cw" class="w-4 h-4"></i> Retourner
+          </button>
+
+          <button onclick="nextFlashcard()" ${state.currentFcIndex === total - 1 ? 'disabled' : ''} class="flex-1 py-3 px-4 rounded-2xl border border-notion-border bg-white font-semibold text-xs text-fc-navy hover:bg-notion-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-xs">
+            Suivante <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        ${state.isAdmin ? `
+          <div class="flex items-center justify-center gap-4 pt-4 border-t border-notion-border">
+            <button onclick="openFlashcardModal('${subjectId}', '${chap.id}', ${state.currentFcIndex})" class="px-3.5 py-2 text-xs font-medium text-fc-navy bg-white border border-notion-border hover:bg-notion-hover flex items-center gap-1.5 rounded-xl transition">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Modifier cette carte
+            </button>
+            <button onclick="confirmDeleteFlashcard('${subjectId}', '${chap.id}', ${state.currentFcIndex})" class="px-3.5 py-2 text-xs font-medium text-notion-redText bg-notion-redBg hover:opacity-90 rounded-xl flex items-center gap-1.5 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Supprimer cette carte
+            </button>
+          </div>
+        ` : ''}
+      `;
+
+      container.appendChild(deck);
+      return container;
+    }
+
+    // --- CARD HTML RENDERER (VERSO & RECTO WITH VISUAL DESIGN RULES) ---
+    function renderSingleCardHTML(type, cardData, subjectName, cardNum, isMobile = false) {
+      const isRecto = type === 'recto';
+      
+      const bgColor = isRecto ? 'bg-[#FFFCF5]' : 'bg-[#F4FFF9]';
+      const cornerDeco1 = isRecto 
+        ? '<div class="absolute top-0 right-0 w-24 h-24 bg-fc-coral/15 rounded-bl-full pointer-events-none"></div>'
+        : '<div class="absolute top-0 right-0 w-24 h-24 bg-fc-mint/25 rounded-bl-full pointer-events-none"></div>';
+      
+      const cornerDeco2 = isRecto
+        ? '<div class="absolute bottom-0 left-0 w-20 h-20 bg-fc-yellow/20 rounded-tr-full pointer-events-none"></div>'
+        : '<div class="absolute bottom-0 left-0 w-20 h-20 bg-fc-violet/20 rounded-tr-full pointer-events-none"></div>';
+
+      return `
+        <div class="relative ${bgColor} border border-notion-border/80 rounded-[28px] p-6 sm:p-7 flex flex-col justify-between shadow-sm min-h-[420px] sm:min-h-[460px] aspect-[16/10] sm:aspect-auto overflow-hidden text-fc-navy transition duration-200 hover:shadow-md">
+          
+          ${cornerDeco1}
+          ${cornerDeco2}
+
+          <!-- HEADER CARD -->
+          <div class="flex items-center justify-between z-10 relative">
+            <span class="text-[10px] font-extrabold tracking-wider px-3 py-1 rounded-full bg-notion-hover/80 text-fc-navy border border-notion-border/50 uppercase">
+              ${escapeHtml(subjectName)}
+            </span>
+
+            <div class="flex items-center gap-2">
+              ${!isRecto ? `
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-fc-emerald/15 text-fc-emerald">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Réponse
+                </span>
+              ` : `
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-fc-yellow/30 text-fc-navy">
+                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-fc-navy"></i> Question
+                </span>
+              `}
+              <span class="text-xs font-bold text-fc-navy/60 bg-white/80 px-2.5 py-0.5 rounded-full border border-notion-border/40">
+                ${cardNum}
+              </span>
+            </div>
+          </div>
+
+          <!-- CARD CONTENT -->
+          <div class="my-auto z-10 relative space-y-4 py-2">
+            ${isRecto ? `
+              <!-- RECTO QUESTION -->
+              <div class="relative">
+                <p class="text-xl sm:text-2xl lg:text-2xl font-bold leading-snug text-fc-navy text-center px-2">
+                  ${escapeHtml(cardData.question)}
+                </p>
+              </div>
+            ` : `
+              <!-- VERSO ANSWER -->
+              <div class="space-y-3">
+                <p class="text-base sm:text-lg font-semibold leading-relaxed text-fc-navy">
+                  ${escapeHtml(cardData.answer)}
+                </p>
+
+                ${cardData.remember ? `
+                  <!-- À RETENIR BLOC -->
+                  <div class="bg-fc-rememberBg border border-fc-mint/40 rounded-2xl p-3.5 flex items-start gap-3 mt-3">
+                    <div class="p-1.5 bg-fc-mint text-fc-navy rounded-xl shrink-0 mt-0.5">
+                      <i data-lucide="target" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-fc-navy uppercase tracking-wider mb-0.5">À retenir</h4>
+                      <p class="text-xs font-medium text-fc-navy/90 leading-relaxed">${escapeHtml(cardData.remember)}</p>
+                    </div>
+                  </div>
+                ` : ''}
+
+                ${cardData.example ? `
+                  <!-- EXEMPLE OU FORMULE BLOC -->
+                  <div class="bg-fc-secondaryBg/80 border border-notion-border/60 rounded-xl p-3 text-xs font-mono text-fc-navy/90 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-fc-coral shrink-0"></i>
+                    <span>${escapeHtml(cardData.example)}</span>
+                  </div>
+                ` : ''}
+              </div>
+            `}
+          </div>
+
+          <!-- FOOTER / DECORATIONS & HINTS -->
+          <div class="flex items-center justify-between text-[11px] text-fc-navy/60 z-10 relative pt-2 border-t border-fc-navy/5">
+            ${isRecto ? `
+              <span class="flex items-center gap-1.5 font-medium">
+                <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-fc-yellow"></i> Réfléchis avant de retourner !
+              </span>
+              <div class="flex items-center gap-1 text-fc-coral">
+                <i data-lucide="sparkle" class="w-3 h-3"></i>
+              </div>
+            ` : `
+              <span class="flex items-center gap-1.5 font-semibold text-fc-emerald">
+                <i data-lucide="thumbs-up" class="w-3.5 h-3.5"></i> Bien joué !
+              </span>
+              <span class="text-[10px] text-notion-textMuted font-medium">EduSpace Flashcards</span>
+            `}
+          </div>
+
+        </div>
+      `;
+    }
+
+    function shuffleFlashcards(subjectId, chapterId) {
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      const chap = sub?.chapters.find(c => c.id === chapterId);
+
+      if (chap && chap.resources?.flashcards?.length > 1) {
+        const fc = chap.resources.flashcards;
+        for (let i = fc.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [fc[i], fc[j]] = [fc[j], fc[i]];
+        }
+        state.currentFcIndex = 0;
+        state.isFcFlipped = false;
+        saveStateToStorage();
+        renderApp();
+      }
+    }
+
+    function toggleFlipCard() {
+      state.isFcFlipped = !state.isFcFlipped;
+      const el = document.getElementById('flashcardInner');
+      if (el) {
+        if (state.isFcFlipped) el.classList.add('rotate-y-180');
+        else el.classList.remove('rotate-y-180');
+      }
+    }
+
+    function nextFlashcard() {
+      const subject = state.data.subjects.find(s => s.id === state.selectedSubjectId);
+      const chap = subject?.chapters.find(c => c.id === state.selectedChapterId);
+      const total = chap?.resources?.flashcards?.length || 0;
+
+      if (state.currentFcIndex < total - 1) {
+        state.currentFcIndex++;
+        state.isFcFlipped = false;
+        renderApp();
+      }
+    }
+
+    function prevFlashcard() {
+      if (state.currentFcIndex > 0) {
+        state.currentFcIndex--;
+        state.isFcFlipped = false;
+        renderApp();
+      }
+    }
+
+    function resetFlashcards() {
+      state.currentFcIndex = 0;
+      state.isFcFlipped = false;
+      renderApp();
+    }
+
+    // --- SEARCH ---
+    function handleSearch(query) {
+      const resultsContainer = document.getElementById('searchResults');
+      if (!query.trim()) {
+        resultsContainer.classList.add('hidden');
+        return;
+      }
+
+      const q = query.toLowerCase();
+      const results = [];
+
+      state.data.subjects.forEach(s => {
+        if (s.name.toLowerCase().includes(q)) {
+          results.push({ type: 'Matière', title: s.name, subjectId: s.id, chapterId: null });
+        }
+        s.chapters?.forEach(c => {
+          if (c.title.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q)) {
+            results.push({ type: 'Chapitre', title: `${s.name} > ${c.title}`, subjectId: s.id, chapterId: c.id });
+          }
+        });
+      });
+
+      if (results.length === 0) {
+        resultsContainer.innerHTML = `<p class="p-3 text-xs text-notion-textMuted text-center">Aucun résultat trouvé</p>`;
+      } else {
+        resultsContainer.innerHTML = results.map(r => `
+          <div onclick="navigateTo('${r.chapterId ? 'chapterDetail' : 'chapters'}', '${r.subjectId}', '${r.chapterId || ''}'); document.getElementById('searchResults').classList.add('hidden');" class="p-2 hover:bg-notion-hover rounded-lg cursor-pointer text-xs">
+            <span class="text-[10px] text-notion-textMuted font-semibold uppercase block">${r.type}</span>
+            <span class="font-medium text-notion-text">${escapeHtml(r.title)}</span>
+          </div>
+        `).join('');
+      }
+
+      resultsContainer.classList.remove('hidden');
+    }
+
+    // --- CONFIRMATION DIALOG ---
+    function openConfirmModal(title, message, callback) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      state.confirmCallback = callback;
+      
+      const btn = document.getElementById('confirmActionBtn');
+      btn.onclick = function() {
+        if (state.confirmCallback) state.confirmCallback();
+        closeModal('confirmModal');
+      };
+
+      openModal('confirmModal');
+    }
+
+    // --- MODALS UTILS ---
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function openAdminModal() {
+      if (state.isAdmin) {
+        logoutAdmin();
+      } else {
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('loginError').classList.add('hidden');
+        openModal('loginModal');
+      }
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('adminPasswordInput').value;
+      if (pwd === 'Amenmastour.26') {
+        state.isAdmin = true;
+        localStorage.setItem('eduspace_admin', 'true');
+        closeModal('loginModal');
+        renderApp();
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      state.isAdmin = false;
+      localStorage.setItem('eduspace_admin', 'false');
+      renderApp();
+    }
+
+    // --- DELETIONS ---
+    function confirmDeleteSubject(subjectId) {
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      openConfirmModal(
+        "Supprimer la matière ?",
+        `Êtes-vous sûr de vouloir supprimer la matière "${sub?.name}" ainsi que l'ensemble de ses chapitres ?`,
+        () => {
+          state.data.subjects = state.data.subjects.filter(s => s.id !== subjectId);
+          saveStateToStorage();
+          renderApp();
+        }
+      );
+    }
+
+    function confirmDeleteChapter(subjectId, chapterId) {
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      const chap = sub?.chapters.find(c => c.id === chapterId);
+      openConfirmModal(
+        "Supprimer le chapitre ?",
+        `Êtes-vous sûr de vouloir supprimer le chapitre "${chap?.title}" ?`,
+        () => {
+          if (sub) {
+            sub.chapters = sub.chapters.filter(c => c.id !== chapterId);
+            saveStateToStorage();
+            renderApp();
+          }
+        }
+      );
+    }
+
+    function confirmDeletePdf(subjectId, chapterId, resourceType) {
+      openConfirmModal(
+        "Supprimer le PDF ?",
+        "Êtes-vous sûr de vouloir supprimer ce document PDF ?",
+        () => {
+          const sub = state.data.subjects.find(s => s.id === subjectId);
+          const chap = sub?.chapters.find(c => c.id === chapterId);
+          if (chap && chap.resources && chap.resources[resourceType]) {
+            chap.resources[resourceType] = { title: '', url: '' };
+            saveStateToStorage();
+            renderApp();
+          }
+        }
+      );
+    }
+
+    function confirmDeleteFlashcard(subjectId, chapterId, index) {
+      openConfirmModal(
+        "Supprimer la flashcard ?",
+        "Êtes-vous sûr de vouloir supprimer cette carte mémoire ?",
+        () => {
+          const sub = state.data.subjects.find(s => s.id === subjectId);
+          const chap = sub?.chapters.find(c => c.id === chapterId);
+          if (chap && chap.resources?.flashcards) {
+            chap.resources.flashcards.splice(index, 1);
+            if (state.currentFcIndex >= chap.resources.flashcards.length) {
+              state.currentFcIndex = Math.max(0, chap.resources.flashcards.length - 1);
+            }
+            saveStateToStorage();
+            renderApp();
+          }
+        }
+      );
+    }
+
+    function confirmResetAll() {
+      openConfirmModal(
+        "Réinitialiser toutes les données ?",
+        "Attention : cette action supprimera toutes vos modifications et réinitialisera l'application avec les données par défaut.",
+        () => {
+          state.data = DEFAULT_DATA;
+          saveStateToStorage();
+          renderApp();
+        }
+      );
+    }
+
+    // --- SUBJECT CRUD MODALS & SAVING ---
+    function openSubjectModal(subjectId = null) {
+      const title = document.getElementById('subjectModalTitle');
+      const idIn = document.getElementById('subjectIdInput');
+      const nameIn = document.getElementById('subjectNameInput');
+      const iconIn = document.getElementById('subjectIconInput');
+      const descIn = document.getElementById('subjectDescInput');
+
+      if (subjectId) {
+        const sub = state.data.subjects.find(s => s.id === subjectId);
+        title.textContent = "Modifier la Matière";
+        idIn.value = sub.id;
+        nameIn.value = sub.name;
+        iconIn.value = sub.icon || '';
+        descIn.value = sub.description || '';
+      } else {
+        title.textContent = "Ajouter une Matière";
+        idIn.value = '';
+        nameIn.value = '';
+        iconIn.value = 'book-open';
+        descIn.value = '';
+      }
+
+      openModal('subjectModal');
+    }
+
+    function saveSubject(e) {
+      e.preventDefault();
+      const id = document.getElementById('subjectIdInput').value;
+      const name = document.getElementById('subjectNameInput').value;
+      const icon = document.getElementById('subjectIconInput').value || 'book-open';
+      const description = document.getElementById('subjectDescInput').value;
+
+      if (id) {
+        const sub = state.data.subjects.find(s => s.id === id);
+        if (sub) {
+          sub.name = name;
+          sub.icon = icon;
+          sub.description = description;
+        }
+      } else {
+        const newSub = {
+          id: 'sub_' + Date.now(),
+          name,
+          icon,
+          description,
+          chapters: []
+        };
+        state.data.subjects.push(newSub);
+      }
+
+      saveStateToStorage();
+      closeModal('subjectModal');
+      renderApp();
+    }
+
+    // --- CHAPTER CRUD MODALS & SAVING ---
+    function openChapterModal(subjectId, chapterId = null) {
+      document.getElementById('chapterSubjectIdInput').value = subjectId;
+      const idIn = document.getElementById('chapterIdInput');
+      const titleIn = document.getElementById('chapterTitleInput');
+      const descIn = document.getElementById('chapterDescInput');
+      const modalTitle = document.getElementById('chapterModalTitle');
+
+      if (chapterId) {
+        const sub = state.data.subjects.find(s => s.id === subjectId);
+        const chap = sub?.chapters.find(c => c.id === chapterId);
+        modalTitle.textContent = "Modifier le Chapitre";
+        idIn.value = chap.id;
+        titleIn.value = chap.title;
+        descIn.value = chap.description || '';
+      } else {
+        modalTitle.textContent = "Ajouter un Chapitre";
+        idIn.value = '';
+        titleIn.value = '';
+        descIn.value = '';
+      }
+
+      openModal('chapterModal');
+    }
+
+    function saveChapter(e) {
+      e.preventDefault();
+      const subjectId = document.getElementById('chapterSubjectIdInput').value;
+      const id = document.getElementById('chapterIdInput').value;
+      const title = document.getElementById('chapterTitleInput').value;
+      const description = document.getElementById('chapterDescInput').value;
+
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      if (sub) {
+        if (!sub.chapters) sub.chapters = [];
+
+        if (id) {
+          const chap = sub.chapters.find(c => c.id === id);
+          if (chap) {
+            chap.title = title;
+            chap.description = description;
+          }
+        } else {
+          const newChap = {
+            id: 'chap_' + Date.now(),
+            title,
+            description,
+            resources: {
+              course: { title: '', url: '' },
+              exercises: { title: '', url: '' },
+              correction: { title: '', url: '' },
+              flashcards: []
+            }
+          };
+          sub.chapters.push(newChap);
+        }
+
+        saveStateToStorage();
+        closeModal('chapterModal');
+        renderApp();
+      }
+    }
+
+    // --- RESOURCE (PDF) MODAL & SAVING ---
+    function openResourceModal(subjectId, chapterId, resourceType) {
+      document.getElementById('resourceSubjectId').value = subjectId;
+      document.getElementById('resourceChapterId').value = chapterId;
+      document.getElementById('resourceType').value = resourceType;
+
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      const chap = sub?.chapters.find(c => c.id === chapterId);
+      const res = chap?.resources ? chap.resources[resourceType] : null;
+
+      const titleIn = document.getElementById('resourceTitleInput');
+      const urlIn = document.getElementById('resourceUrlInput');
+      document.getElementById('resourceFileInput').value = '';
+      state.tempUploadedDataUrl = null;
+
+      titleIn.value = res?.title || (resourceType === 'course' ? 'Cours PDF' : resourceType === 'exercises' ? 'Série d\'exercices' : 'Correction PDF');
+      urlIn.value = res?.url || '';
+
+      openModal('resourceModal');
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          state.tempUploadedDataUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function saveResource(e) {
+      e.preventDefault();
+      const subjectId = document.getElementById('resourceSubjectId').value;
+      const chapterId = document.getElementById('resourceChapterId').value;
+      const resourceType = document.getElementById('resourceType').value;
+      const title = document.getElementById('resourceTitleInput').value;
+      const urlInput = document.getElementById('resourceUrlInput').value;
+
+      const finalUrl = state.tempUploadedDataUrl || urlInput;
+
+      const sub = state.data.subjects.find(s => s.id === subjectId);
+      const chap = sub?.chapters.find(c => c.id === chapterId);
+
+      if (chap) {
+        if (!chap.resources) chap.resources = {};
+        chap.resources[resourceType] = {
+          title: title,
+          url: finalUrl
+        };
+
+        saveStateToStorage();
+        closeModal('resourceModal');
+        renderApp();
+      }
+    }
+
+    // --- FLASHCARD CRUD MODIFICATIONS ---
+    function openFlashcardModal(subjectId, chapterId, index = -1) {
+      document.getElementById('fcSubjectId').value = subjectId;
+      document.getElementById('fcChapterId').value = chapterId;
+      document.getElementById('fcIndex').value = index;
+
+      const qIn = document.getElementById('fcQuestionInput');
+      const aIn = document.getElementById('fcAnswerInput');
+      const rIn = document.getElementById('fcRememberInput');
+      const eIn = document.getElementById('fcExampleInput');
+      const title = document.getElementById('flashcardModalTitle');
+
+      if (index >= 0) {
+        const sub = state.data.subjects.find(s => s.id === subjectId);
+        const chap = sub?.chapters.find(c => c.id === chapterId);
+        const card = chap?.resources?.flashcards[index];
+        title.textContent = "Modifier la Flashcard";
+        qIn.value = card ? card.question : '';
+        aIn.value = card ? card.answer : '';
+        rIn.value = card?.remember || '';
+        eIn.value = card?.example || '';
+      } else {
+        title.textContent = "Ajouter une Flashcard";
+        qIn.value = '';
+        aIn.value = '';
+        rIn.value = '';
+        eIn.value = '';
+      }
+
+      openModal('flashcardModal');
+    }
+
+    function saveFlashcard(e) {
+      e.preventDefault();
+      const subId = document.getElementById('fcSubjectId').value;
+      const chapId = document.getElementById('fcChapterId').value;
+      const index = parseInt(document.getElementById('fcIndex').value, 10);
+      const question = document.getElementById('fcQuestionInput').value;
+      const answer = document.getElementById('fcAnswerInput').value;
+      const remember = document.getElementById('fcRememberInput').value;
+      const example = document.getElementById('fcExampleInput').value;
+
+      const sub = state.data.subjects.find(s => s.id === subId);
+      const chap = sub?.chapters.find(c => c.id === chapId);
+
+      if (chap) {
+        if (!chap.resources) chap.resources = {};
+        if (!chap.resources.flashcards) chap.resources.flashcards = [];
+
+        const cardObject = { question, answer, remember, example };
+
+        if (index >= 0) {
+          chap.resources.flashcards[index] = cardObject;
+        } else {
+          chap.resources.flashcards.push(cardObject);
+          state.currentFcIndex = chap.resources.flashcards.length - 1;
+        }
+
+        saveStateToStorage();
+        closeModal('flashcardModal');
+        renderApp();
+      }
+    }
+
+    // --- HELPER FUNCTIONS ---
+    function renderIconOrEmoji(iconStr) {
+      if (!iconStr) return '📚';
+      if (/\p{Extended_Pictographic}/u.test(iconStr)) {
+        return iconStr;
+      }
+      return `<i data-lucide="${iconStr}" class="w-5 h-5"></i>`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "eduspace_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+  </script>
+</body>
+</html>
