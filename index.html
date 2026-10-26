@@ -127,12 +127,6 @@
         <!-- Right: Search & Admin Toggle -->
         <div class="flex items-center gap-3 shrink-0">
           
-          <!-- Sync Indicator -->
-          <div id="syncStatus" class="hidden sm:flex items-center gap-1.5 text-xs text-notion-textMuted px-2 py-1 rounded-md bg-white/50 border border-notion-border">
-            <i data-lucide="cloud" class="w-3.5 h-3.5 text-emerald-600"></i>
-            <span class="text-[11px]">Connecté à la BDD</span>
-          </div>
-
           <!-- Search Bar -->
           <div class="relative hidden sm:block w-44 md:w-64">
             <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-notion-textMuted"></i>
@@ -172,7 +166,7 @@
       <div id="viewContainer"></div>
 
     </main>
-
+  </div>
 
   <!-- MODAL: ADMIN LOGIN -->
   <div id="loginModal" class="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
@@ -249,8 +243,8 @@
           <input type="text" id="subjectIconInput" placeholder="ex: code, monitor, 💻" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
         </div>
         <div>
-          <label class="block text-xs font-medium text-notion-textMuted mb-1">Description courte</label>
-          <textarea id="subjectDescInput" rows="2" placeholder="Optionnel..." class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark"></textarea>
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">Description</label>
+          <textarea id="subjectDescInput" rows="2" placeholder="Description courte..." class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark"></textarea>
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
@@ -322,8 +316,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-notion-textMuted mb-1">URL Web du PDF</label>
-          <input type="url" id="resourceUrlInput" placeholder="https://exemple.com/cours.pdf" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
+          <label class="block text-xs font-medium text-notion-textMuted mb-1">URL Web ou Google Drive du PDF</label>
+          <input type="url" id="resourceUrlInput" placeholder="https://drive.google.com/file/d/.../view" class="w-full px-3 py-2 text-sm bg-notion-bg border border-notion-border rounded-lg outline-none focus:border-notion-borderDark">
         </div>
 
         <div class="flex justify-end gap-2 pt-2">
@@ -379,8 +373,175 @@
 
   <!-- APPLICATION LOGIC -->
   <script>
-    // --- API ENDPOINT ---
-    const API_URL = "https://script.google.com/macros/s/AKfycbwwovn4rVG_rTHiXblL-tISlbgkQC3XsLu38cgzwcmMS8VEUrZ3zkQWDomNu6I405DjgA/exec";
+    // --- EMBEDDED PDF CONTENT HTML FOR FINANCE CHAP 1 ---
+    const CHAP1_FINANCE_DRIVE_URL = "https://drive.google.com/file/d/1ZpQPiVBi96iCqSwEL8bGUyH8G67va8Op/view?usp=sharing";
+
+    const CHAP1_FINANCE_HTML_COURSE = `
+      <div class="p-6 md:p-10 space-y-8 text-notion-text bg-white max-w-4xl mx-auto rounded-xl shadow-xs border border-notion-border">
+        <!-- Header Document -->
+        <div class="border-b pb-6 text-center space-y-2">
+          <span class="text-xs font-bold text-notion-textMuted uppercase tracking-widest">UNIVERSITÉ DE CARTHAGE — IHEC 2026-2027 (LSG 1ère année)</span>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-fc-navy">Chapitre 1 : Fondements mathématiques de la finance</h1>
+          <p class="text-xs text-notion-textMuted">Cours Principles of Finance — Document rédigé complet</p>
+        </div>
+
+        <!-- Sommaire -->
+        <div class="bg-notion-bg p-4 rounded-xl border border-notion-border">
+          <h2 class="text-sm font-bold text-fc-navy mb-3 uppercase tracking-wider">Sommaire du cours</h2>
+          <ol class="list-decimal list-inside text-xs space-y-1.5 text-notion-text font-medium">
+            <li><span class="font-semibold">La finance et la valeur temps de l'argent</span> (Définitions, domaines, déterminants du taux d'intérêt, taux réel vs nominal)</li>
+            <li><span class="font-semibold">Intérêts simples et intérêts composés</span> (Calculs, fractions d'année, taux proportionnel)</li>
+            <li><span class="font-semibold">Capitalisation et actualisation</span> (Valeur actuelle, TEA, taux équivalent)</li>
+            <li><span class="font-semibold">Annuités constantes</span> (Fin et début de période)</li>
+            <li><span class="font-semibold">Annuités variables</span></li>
+            <li><span class="font-semibold">Compétence Excel</span> (Applications des mathématiques financières)</li>
+          </ol>
+        </div>
+
+        <!-- Section 1 -->
+        <section class="space-y-4">
+          <h2 class="text-lg font-bold text-fc-navy border-b pb-2">1. La finance et la valeur temps de l'argent</h2>
+          
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-fc-navy">1.1 Définition de la finance</h3>
+            <p class="text-xs leading-relaxed text-notion-text">
+              La finance est l'étude de la gestion, de la circulation et de la mobilisation des ressources financières.
+            </p>
+            <ul class="list-disc list-inside text-xs space-y-1 pl-2 text-notion-text">
+              <li><strong>La gestion des ressources :</strong> Déterminer comment utiliser efficacement l'argent dont on dispose.</li>
+              <li><strong>La circulation des ressources :</strong> Comprendre comment l'argent circule entre les différents agents économiques : ménages, entreprises, banques, État et investisseurs.</li>
+              <li><strong>La mobilisation des ressources :</strong> Déterminer comment obtenir les fonds nécessaires pour financer un projet ou une activité.</li>
+            </ul>
+            <p class="text-xs leading-relaxed text-notion-text">
+              Le terme anglais « finance » peut être utilisé comme un verbe ou un nom. Essentiellement, l'étude de la finance consiste à comprendre les emplois et les sources de fonds, ainsi que le concept d'arbitrage entre <strong>risque et rendement</strong> (<em>risk-reward trade-off</em>).
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-fc-navy">1.2 Les principaux domaines de la finance</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="bg-notion-bg p-3 rounded-lg border border-notion-border text-xs">
+                <h4 class="font-bold text-fc-navy mb-1">1. Finance d'entreprise (Corporate Finance)</h4>
+                <p class="text-notion-textMuted">Décisions au sein de l'entreprise : équilibre financier au quotidien, choix d'investissement et choix de financement (capitaux propres vs dette).</p>
+              </div>
+              <div class="bg-notion-bg p-3 rounded-lg border border-notion-border text-xs">
+                <h4 class="font-bold text-fc-navy mb-1">2. Investissements (Investments)</h4>
+                <p class="text-notion-textMuted">Placement de ressources (actions, obligations, immobilier, matières premières) avec un arbitrage constant entre risque et rendement.</p>
+              </div>
+              <div class="bg-notion-bg p-3 rounded-lg border border-notion-border text-xs">
+                <h4 class="font-bold text-fc-navy mb-1">3. Marchés & Institutions Financiers</h4>
+                <p class="text-notion-textMuted">Rencontre des offreurs et demandeurs de capitaux via les banques commerciales/d'investissement et sous la supervision des régulateurs.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-fc-navy">1.3 La valeur temps de l'argent</h3>
+            <p class="text-xs leading-relaxed text-notion-text">
+              Une somme disponible aujourd'hui vaut davantage que la même somme disponible dans le futur.
+              Si 1 000 DT reçus aujourd'hui sont placés pendant 1 an à 5%, on obtient :
+            </p>
+            <div class="p-3 bg-fc-secondaryBg rounded-lg text-center text-xs font-semibold text-fc-navy">
+              1000 × (1 + 0,05) = 1 050 DT &nbsp;⟹&nbsp; 1 000 DT aujourd'hui ≡ 1 050 DT dans un an (au taux de 5%)
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-fc-navy">1.4 Les déterminants du taux d'intérêt</h3>
+            <p class="text-xs text-notion-text">Du point de vue de l'investisseur, le taux d'intérêt s'exprime comme la somme de la rémunération du temps et de la compensation des risques :</p>
+            <div class="p-3 bg-notion-bg border border-notion-border rounded-lg text-xs font-mono text-center">
+              i ≈ i* + IP + DRP + LP + MP
+            </div>
+            <ul class="text-xs space-y-1.5 list-disc list-inside text-notion-text pl-2">
+              <li><strong>i* (Taux réel sans risque) :</strong> Rémunération du report de la consommation sans risque ni inflation.</li>
+              <li><strong>IP (Prime d'inflation) :</strong> Compensation pour la perte de pouvoir d'achat de la monnaie.</li>
+              <li><strong>DRP (Prime de risque de défaut) :</strong> Compensation pour la possibilité que l'emprunteur ne rembourse pas à l'échéance.</li>
+              <li><strong>LP (Prime de liquidité) :</strong> Compensation si l'actif est difficile à revendre rapidement sans perte importante.</li>
+              <li><strong>MP (Prime de maturité) :</strong> Compensation liée à la durée de l'investissement et aux variations de taux d'intérêt.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="space-y-4">
+          <h2 class="text-lg font-bold text-fc-navy border-b pb-2">2. Intérêts simples et intérêts composés</h2>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-fc-navy">2.1 Intérêts simples (Simple Interest)</h3>
+            <p class="text-xs text-notion-text">Les intérêts sont calculés uniquement sur le capital initial $C_0$ :</p>
+            <div class="p-3 bg-fc-secondaryBg rounded-lg text-center font-mono text-xs text-fc-navy font-bold">
+              C_n = C_0 \times (1 + (i \times n))
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-fc-navy">2.2 Intérêts composés (Compounded Interest)</h3>
+            <p class="text-xs text-notion-text">
+              Les intérêts générés à chaque période sont réinvestis et produisent à leur tour des intérêts (capitalisation).
+            </p>
+            <div class="p-3 bg-fc-secondaryBg rounded-lg text-center font-mono text-xs text-fc-navy font-bold">
+              C_n = C_0 \times (1 + i)^n
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+
+    // 52 COMPLETE FLASHCARDS FOR FINANCE CHAP 1
+    const CHAP1_FINANCE_FLASHCARDS = [
+      { question: "1. Définition de la finance", answer: "L'étude de la gestion, de la circulation et de la mobilisation des ressources financières.", remember: "Gestion, circulation et mobilisation de l'argent.", example: "Finance = verbe et nom." },
+      { question: "2. Les 3 volets fondamentaux de la finance", answer: "1. Gestion des ressources (utilisation efficace) 2. Circulation des ressources (flux entre agents) 3. Mobilisation des ressources (obtention de fonds).", remember: "Gérer, faire circuler, mobiliser.", example: "Ex: Émission d'actions ou emprunt bancaire." },
+      { question: "3. Arbitrage central en finance", answer: "L'arbitrage entre le risque et le rendement (Risk-Reward Trade-off).", remember: "Plus de risque exigera un rendement plus élevé.", example: "Action vs Compte d'épargne." },
+      { question: "4. Les 3 principaux domaines de la finance", answer: "1. Corporate Finance (Finance d'entreprise) 2. Investments (Investissements) 3. Marchés et Institutions Financières.", remember: "Entreprise, Investissements, Marchés/Banques.", example: "Choix de structure de capital." },
+      { question: "5. Objet de la Finance d'entreprise (Corporate Finance)", answer: "Gérer l'équilibre financier au quotidien et prendre des décisions d'investissement et de financement à long terme.", remember: "Investissement + Financement d'entreprise.", example: "Achat d'une nouvelle usine." },
+      { question: "6. Objet du domaine des Investissements", answer: "Déterminer la composition optimale d'un portefeuille d'actifs financiers en mesurant risques et rendements.", remember: "Gestion de portefeuille & valorisation.", example: "Achat d'actions et obligations." },
+      { question: "7. Rôle des Marchés et Institutions Financiers", answer: "Faciliter la rencontre des offreurs (épargnants) et demandeurs de capitaux (emprunteurs) sous régulation.", remember: "Mise en relation des agents économiques.", example: "Bourse des valeurs, banques commerciales." },
+      { question: "8. Le principe de la valeur temps de l'argent", answer: "Un dinar disponible aujourd'hui vaut plus qu'un dinar disponible dans le futur.", remember: "Aujourd'hui > Futur.", example: "1 000 DT aujourd'hui = 1 050 DT dans 1 an à 5%." },
+      { question: "9. Raisons majeures de la valeur temps de l'argent", answer: "1. Coût d'opportunité de la consommation 2. Inflation (perte de pouvoir d'achat) 3. Incertitude/Risque futur.", remember: "Consommation, Inflation, Risque.", example: "Préférer consommer ou placer tout de suite." },
+      { question: "10. Formule d'évaluation du taux d'intérêt global (i)", answer: "i ≈ i* + IP + DRP + LP + MP", remember: "i* + 4 primes de risque.", example: "Taux nominal global." },
+      { question: "11. Définition de i* (Taux réel sans risque)", answer: "Le taux exigé pour le simple report de la consommation, sans aucun risque de défaut ni inflation.", remember: "Rémunération pure du temps.", example: "Taux théorique pur." },
+      { question: "12. Définition de IP (Inflation Premium)", answer: "La prime compensant la perte attendue du pouvoir d'achat durant la période d'investissement.", remember: "Compensation de l'inflation.", example: "Si inflation = 3%, IP = 3%." },
+      { question: "13. Définition de DRP (Default Risk Premium)", answer: "La prime de risque de défaut compensant la possibilité que l'emprunteur ne rembourse pas sa dette.", remember: "Risque de non-remboursement.", example: "Prime élevée pour une entreprise en difficulté." },
+      { question: "14. Définition de LP (Liquidity Premium)", answer: "La prime compensant la difficulté de revendre rapidement un actif sans concéder de perte significative.", remember: "Actif difficile à vendre = LP élevée.", example: "Immobilier vs Action cotée." },
+      { question: "15. Définition de MP (Maturity Premium)", answer: "La prime liée à la durée de l'engagement : plus l'échéance est lointaine, plus la sensibilité aux variations de taux est forte.", remember: "Prime de risque de maturité/durée.", example: "Prêt sur 20 ans vs 1 an." },
+      { question: "16. Formule de Fisher (Taux nominal vs réel)", answer: "(1 + i) = (1 + r) × (1 + IP)  =>  r ≈ i - IP", remember: "r est le taux réel ajusté de l'inflation.", example: "Si i = 7% et IP = 3%, r ≈ 4%." },
+      { question: "17. Définition de l'intérêt simple", answer: "Intérêt calculé exclusivement sur le capital initial $C_0$ à chaque période.", remember: "Intérêts non réinvestis.", example: "Placements à court terme (< 1 an)." },
+      { question: "18. Formule de la valeur acquise à intérêt simple (C_n)", answer: "$C_n = C_0 \times (1 + i \times n)$", remember: "Capitalisation linéaire.", example: "C_n = 1000 × (1 + 0.05 × 3) = 1150." },
+      { question: "19. Formule du montant total des intérêts simples (I)", answer: "$I = C_0 \times i \times n$", remember: "I = C0 × i × n.", example: "1000 × 5% × 2 ans = 100 DT." },
+      { question: "20. Conversion du temps (n) pour intérêts simples sur fractions d'année", answer: "n = jours / 360 (exact/exact ou commercial) ou mois / 12.", remember: "Année commerciale = 360 jours.", example: "90 jours = 90/360 = 0,25 an." },
+      { question: "21. Définition de l'intérêt composé", answer: "Intérêt calculé à la fin de chaque période sur le capital initial augmenté des intérêts accumulés (capitalisation).", remember: "Les intérêts produisent des intérêts.", example: "Placements à moyen et long terme (> 1 an)." },
+      { question: "22. Formule de la valeur acquise à intérêt composé (C_n)", answer: "$C_n = C_0 \times (1 + i)^n$", remember: "Capitalisation exponentielle.", example: "1000 × (1,05)^3 = 1157,625 DT." },
+      { question: "23. Formule de la valeur actuelle en intérêts composés (C_0) - Actualisation", answer: "$C_0 = C_n \times (1 + i)^{-n} = \\frac{C_n}{(1 + i)^n}$", remember: "Actualisation exponentielle.", example: "Valeur aujourd'hui d'un flux futur." },
+      { question: "24. Différence fondamentale entre capitalisation et actualisation", answer: "La capitalisation calcule la valeur future ($V_N$) à partir du présent, l'actualisation calcule la valeur présente ($V_0$) à partir du futur.", remember: "Capitaliser = projeter dans le futur / Actualiser = ramener au présent.", example: "V_0 = V_N / (1+i)^N." },
+      { question: "25. Facteur de capitalisation à intérêts composés", answer: "$(1 + i)^n$", remember: "Multiplie la valeur initiale pour trouver la valeur future.", example: "(1,08)^5." },
+      { question: "26. Facteur d'actualisation à intérêts composés", answer: "$(1 + i)^{-n}$ ou $\\frac{1}{(1 + i)^n}$", remember: "Multiplie le flux futur pour trouver sa valeur présente.", example: "(1,08)^-5." },
+      { question: "27. Définition du Taux Effectif Annuel (TEA / EAR)", answer: "Le taux d'intérêt réaffiché sur une base annuelle qui prend en compte la fréquence de capitalisation infra-annuelle.", remember: "Mesure le vrai coût/rendement annuel avec capitalisation sub-annuelle.", example: "Si taux nominal = 12% composé mensuellement, TEA = (1+0,01)^12 - 1 = 12,68%." },
+      { question: "28. Formule du Taux Effectif Annuel (TEA / EAR)", answer: "$\\text{TEA} = \\left(1 + \\frac{i_{\\text{nom}}}{m}\\right)^m - 1$", remember: "m = nombre de sous-périodes par an.", example: "Semestriel: m=2, Trimestriel: m=4, Mensuel: m=12." },
+      { question: "29. Définition du taux proportionnel", answer: "$i_p = \\frac{i_{\\text{annuel}}}{m}$", remember: "Division directe du taux annuel par le nombre de périodes.", example: "12% / 12 = 1% par mois." },
+      { question: "30. Définition des taux équivalents", answer: "Deux taux relatifs à des périodes différentes sont équivalents s'ils procurent la même valeur acquise pour un même capital initial.", remember: "$(1 + i_a) = (1 + i_k)^k$.", example: "$(1 + i_a) = (1 + i_m)^{12}$." },
+      { question: "31. Formule du taux mensuel équivalent ($i_m$)", answer: "$i_m = (1 + i_a)^{\\frac{1}{12}} - 1$", remember: "Racine 12-ième de (1 + ia) moins 1.", example: "Pour ia = 10%, im = (1,10)^(1/12) - 1 = 0,797%." },
+      { question: "32. Pourquoi le taux effectif annuel (TEA) est supérieur au taux nominal ?", answer: "Parce que les intérêts générés en cours d'année sont immédiatement réinvestis pour générer d'autres intérêts.", remember: "Effet d'entraînement de la capitalisation sub-annuelle.", example: "12% nominal mensuel = 12,68% TEA." },
+      { question: "33. Définition d'une annuité", answer: "Une suite de flux monétaires (versements ou remboursements) effectués à intervalles de temps réguliers.", remember: "Flux réguliers et périodiques.", example: "Remboursement mensuel de crédit immobilier." },
+      { question: "34. Définition des annuités constantes", answer: "Annuités dont le montant $a$ est identique pour chaque période.", remember: "Montant fixe de chaque terme $a$.", example: "Versements de 500 DT chaque fin de mois." },
+      { question: "35. Annuités de fin de période (Ordinary Annuity)", answer: "Les flux interviennent à la fin de chaque période (échéances échues).", remember: "Flux en fin de période.", example: "Majorité des remboursements d'emprunts." },
+      { question: "36. Annuités de début de période (Annuity Due)", answer: "Les flux interviennent au début de chaque période (échéances à payer d'avance).", remember: "Flux en début de période.", example: "Loyers d'habitation." },
+      { question: "37. Formule de la Valeur Actuelle ($V_0$) d'annuités constantes de fin de période", answer: "$V_0 = a \\times \\frac{1 - (1 + i)^{-n}}{i}$", remember: "Somme actualisée de $n$ termes constants de fin de période.", example: "a × [1 - (1+i)^-n] / i." },
+      { question: "38. Formule de la Valeur Acquise ($V_n$) d'annuités constantes de fin de période", answer: "$V_n = a \\times \\frac{(1 + i)^n - 1}{i}$", remember: "Somme capitalisée de $n$ termes constants de fin de période.", example: "a × [(1+i)^n - 1] / i." },
+      { question: "39. Relation entre Valeur Actuelle ($V_0$) et Valeur Acquise ($V_n$) d'annuités", answer: "$V_n = V_0 \\times (1 + i)^n$", remember: "Capitalisation globale de V0 sur n périodes.", example: "V0 ramené à la période n." },
+      { question: "40. Formule de la Valeur Actuelle d'annuités constantes de début de période ($V_0^{\\text{début}}$)", answer: "$V_0^{\\text{début}} = V_0^{\\text{fin}} \\times (1 + i) = a \\times \\frac{1 - (1 + i)^{-n}}{i} \\times (1 + i)$", remember: "Multiplier la formule de fin de période par $(1 + i)$.", example: "Loyer payé immédiatement." },
+      { question: "41. Formule de la Valeur Acquise d'annuités constantes de début de période ($V_n^{\\text{début}}$)", answer: "$V_n^{\\text{début}} = V_n^{\\text{fin}} \\times (1 + i) = a \\times \\frac{(1 + i)^n - 1}{i} \\times (1 + i)$", remember: "Chaque terme bénéficie d'une période supplémentaire de capitalisation.", example: "Épargne versée en début de mois." },
+      { question: "42. Définition d'une perpétuité constante", answer: "Une suite infinie d'annuités constantes ($n \\to \\infty$).", remember: "Flux constants sans fin.", example: "Rente viagère perpétuelle." },
+      { question: "43. Formule de la Valeur Actuelle d'une perpétuité constante ($V_0$)", answer: "$V_0 = \\frac{a}{i}$", remember: "V0 = a / i.", example: "Rente de 100 DT par an à 5% => V0 = 100 / 0,05 = 2 000 DT." },
+      { question: "44. Définition d'une perpétuité croissante", answer: "Une suite infinie d'annuités qui croissent à un taux constant $g$ à chaque période.", remember: "Flux grandissant indéfiniment au taux g.", example: "Modèle de Gordon-Shapiro pour actions." },
+      { question: "45. Formule de la Valeur Actuelle d'une perpétuité croissante ($V_0$)", answer: "$V_0 = \\frac{a_1}{i - g} \\quad (\\text{avec } i > g)$", remember: "V0 = Flux1 / (i - g).", example: "Dividende projeté de 10 DT, i = 8%, g = 3% => V0 = 10 / (0,08 - 0,03) = 200 DT." },
+      { question: "46. Formule d'une annuité variable en progression arithmétique", answer: "Les flux augmentent d'un montant fixe $R$ à chaque période : $a_k = a_1 + (k - 1)R$.", remember: "Croissance additive fixe $R$.", example: "100, 110, 120, 130... (R = 10)." },
+      { question: "47. Formule d'une annuité variable en progression géométrique", answer: "Les flux augmentent d'un pourcentage fixe $g$ à chaque période : $a_k = a_1 \\times (1 + g)^{k-1}$.", remember: "Croissance multiplicative fixe $(1 + g)$.", example: "100, 105, 110.25... (g = 5%)." },
+      { question: "48. Formule de la Valeur Actuelle d'annuités en progression géométrique ($n$ périodes)", answer: "$V_0 = a_1 \\times \\frac{1 - (1 + g)^n (1 + i)^{-n}}{i - g} \\quad (\\text{si } i \\neq g)$", remember: "Annuités à croissance géométrique finie.", example: "Formule d'actualisation combinée i et g." },
+      { question: "49. Fonction Excel pour calculer la Valeur Actuelle ($V_0$)", answer: "=VA(taux; npm; vpm; [vc]; [type]) ou en anglais =PV(rate, nper, pmt, [fv], [type])", remember: "VA() ou PV().", example: "=VA(5%; 10; -1000)." },
+      { question: "50. Fonction Excel pour calculer la Valeur Future ($V_n$)", answer: "=VC(taux; npm; vpm; [va]; [type]) ou en anglais =FV(rate, nper, pmt, [pv], [type])", remember: "VC() ou FV().", example: "=VC(5%; 10; -1000)." },
+      { question: "51. Fonction Excel pour calculer l'annuité constante ($a$)", answer: "=VPM(taux; npm; va; [vc]; [type]) ou en anglais =PMT(rate, nper, pv, [fv], [type])", remember: "VPM() ou PMT().", example: "=VPM(5%; 10; -10000)." },
+      { question: "52. Rôle du paramètre « type » dans les fonctions financières Excel", answer: "Indique l'échéance : 0 pour fin de période (par défaut), 1 pour début de période.", remember: "0 = Fin, 1 = Début.", example: "Type 1 pour un loyer payé d'avance." }
+    ];
 
     // --- INITIAL DEMO DATA ---
     const DEFAULT_DATA = {
@@ -389,7 +550,7 @@
           id: 'sub_math',
           name: 'Mathématiques',
           icon: 'calculator',
-          description: 'Analyse, Algèbre linéaire et Probabilités.',
+          description: 'Analyse, Algèbre linéaire, Probabilités et Optimisation.',
           chapters: [
             {
               id: 'chap_math_1',
@@ -405,36 +566,6 @@
                     answer: "Une série numérique est dite convergente si la suite de ses sommes partielles (Sn) admet une limite finie L dans ℝ ou ℂ.",
                     remember: "Convergence ⇔ Limite finie de la suite des sommes partielles (Sn).",
                     example: "Exemple: ∑ (1/2)^n converge vers 2."
-                  },
-                  { 
-                    question: "Quelle est la formule de l'intégration par parties (IPP) ?", 
-                    answer: "Pour deux fonctions u et v dérivables à dérivées continues sur un intervalle [a, b] :",
-                    remember: "On dérive l'une (u) et on intègre l'autre (v') pour simplifier l'intégrale.",
-                    example: "∫[a,b] u(t)v'(t) dt = [u(t)v(t)][a,b] - ∫[a,b] u'(t)v(t) dt"
-                  },
-                  { 
-                    question: "Règle de d'Alembert pour les séries à termes positifs ?", 
-                    answer: "Si lim |a_{n+1}/a_n| = L < 1, la série converge absolument. Si L > 1, elle diverge.",
-                    remember: "L < 1 : Converge | L > 1 : Diverge | L = 1 : Indéterminé.",
-                    example: ""
-                  }
-                ]
-              }
-            },
-            {
-              id: 'chap_math_2',
-              title: 'Algèbre - Espaces Vectoriels',
-              description: 'Bases, dimensions, applications linéaires et matrices.',
-              resources: {
-                course: { title: '', url: '' },
-                exercises: { title: '', url: '' },
-                correction: { title: '', url: '' },
-                flashcards: [
-                  { 
-                    question: "Qu'est-ce qu'un sous-espace vectoriel ?", 
-                    answer: "Un sous-ensemble F d'un espace vectoriel E non vide, stable par addition et stable par multiplication par un scalaire.",
-                    remember: "0_E ∈ F et (∀ x,y ∈ F, ∀ λ,μ ∈ ℝ ⇒ λx + μy ∈ F).",
-                    example: ""
                   }
                 ]
               }
@@ -442,68 +573,69 @@
           ]
         },
         {
-          id: 'sub_gestion',
-          name: 'Management & Gestion',
+          id: 'sub_finance',
+          name: 'Finance',
           icon: 'trending-up',
-          description: 'Analyse financière, comptabilité et stratégie d\'entreprise.',
+          description: 'Mathématiques financières, évaluation des actifs et gestion de trésorerie.',
           chapters: [
             {
-              id: 'chap_gest_1',
-              title: 'Analyse Financière & Bilan',
-              description: 'Structure du bilan, Fonds de Roulement (FRNG) et BFR.',
+              id: 'chap_fin_1',
+              title: 'Chapitre 1 - Fondements mathématiques de la finance',
+              description: 'Intérêts simples et composés, actualisation, capitalisation et valeurs mobilières.',
               resources: {
-                course: { title: 'Support de cours - Finance', url: '' },
-                exercises: { title: '', url: '' },
-                correction: { title: '', url: '' },
-                flashcards: [
-                  { 
-                    question: "Comment calcule-t-on le Fonds de Roulement Net Global (FRNG) ?", 
-                    answer: "Le FRNG mesure la ressource durable disponible pour financer les investissements et le besoin en fonds de roulement d'exploitation.",
-                    remember: "Un FRNG positif indique une structure financière saine et équilibrée.",
-                    example: "FRNG = Ressources Stables - Emplois Stables"
-                  },
-                  { 
-                    question: "Qu'est-ce que le BFR et comment se calcule-t-il ?", 
-                    answer: "Le Besoin en Fonds de Roulement représente le besoin financier généré par le décalage temporel entre les décaissements et les encaissements d'exploitation.",
-                    remember: "BFR > 0 nécessite d'être financé par le FRNG ou la trésorerie.",
-                    example: "BFR = Actif Circulant (hors trésorerie) - Passif Circulant (hors trésorerie)"
-                  }
-                ]
+                course: { 
+                  title: 'Chapitre 1 - Fondements mathématiques de la finance (Cours IHEC 2026-2027)', 
+                  url: CHAP1_FINANCE_DRIVE_URL,
+                  htmlContent: CHAP1_FINANCE_HTML_COURSE
+                },
+                exercises: { title: 'Série d\'exercices - Intérêts & Actualisation', url: '' },
+                correction: { title: 'Correction d\'exercices', url: '' },
+                flashcards: CHAP1_FINANCE_FLASHCARDS
               }
             }
           ]
+        },
+        {
+          id: 'sub_compta',
+          name: 'Comptabilité',
+          icon: 'receipt',
+          description: 'Comptabilité générale, bilan, compte de résultat et analyse financière.',
+          chapters: []
+        },
+        {
+          id: 'sub_macro',
+          name: 'Macroéconomie',
+          icon: 'globe',
+          description: 'Modèles économiques, politiques monétaires et budgétaires, inflation.',
+          chapters: []
+        },
+        {
+          id: 'sub_gestion',
+          name: 'Gestion',
+          icon: 'briefcase',
+          description: 'Management, stratégie d\'entreprise, contrôle de gestion et RH.',
+          chapters: []
         },
         {
           id: 'sub_info',
           name: 'Informatique',
           icon: 'code',
-          description: 'Algorithmique, Structures de données et Développement Web.',
-          chapters: [
-            {
-              id: 'chap_info_1',
-              title: 'Algorithmique & Complexité',
-              description: 'Tri, recherche, notation Grand-O et structures de données.',
-              resources: {
-                course: { title: '', url: '' },
-                exercises: { title: '', url: '' },
-                correction: { title: '', url: '' },
-                flashcards: [
-                  { 
-                    question: "Quelle est la complexité temporelle moyenne et dans le pire des cas du Tri Rapide (Quicksort) ?", 
-                    answer: "En moyenne, Quicksort effectue un découpage équilibré. Dans le pire des cas (pivot mal choisi sur tableau déjà trié), la complexité se dégrade.",
-                    remember: "Moyenne : O(n log n) | Pire des cas : O(n²)",
-                    example: ""
-                  },
-                  { 
-                    question: "Qu'est-ce qu'une structure de données FIFO et LIFO ?", 
-                    answer: "FIFO (First In, First Out) caractérise les Files (Queue). LIFO (Last In, First Out) caractérise les Piles (Stack).",
-                    remember: "File = FIFO (File d'attente) | Pile = LIFO (Pile d'assiettes)",
-                    example: "File: push/pop_front | Pile: push/pop"
-                  }
-                ]
-              }
-            }
-          ]
+          description: 'Algorithmique, développement web, bases de données et Python.',
+          chapters: []
+        },
+        {
+          id: 'sub_francais',
+          name: 'Français',
+          icon: 'book-open',
+          description: 'Expression écrite, culture générale, méthodologie et synthèse de documents.',
+          chapters: []
+        },
+        {
+          id: 'sub_droit',
+          name: 'Droit',
+          icon: 'scale',
+          description: 'Droit des affaires, droit des obligations et cadre juridique des entreprises.',
+          chapters: []
         }
       ]
     };
@@ -512,10 +644,10 @@
     let state = {
       data: null,
       isAdmin: false,
-      currentView: 'subjects', // 'subjects', 'chapters', 'chapterDetail'
+      currentView: 'subjects',
       selectedSubjectId: null,
       selectedChapterId: null,
-      activeTab: 'course', // 'course', 'flashcards', 'exercises', 'correction'
+      activeTab: 'course',
       currentFcIndex: 0,
       isFcFlipped: false,
       tempUploadedDataUrl: null,
@@ -524,32 +656,28 @@
 
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', async () => {
-      await loadStateFromStorage();
+      loadStateFromStorage();
       renderApp();
-      document.getElementById('year').textContent = new Date().getFullYear();
     });
 
-    async function loadStateFromStorage() {
+    function loadStateFromStorage() {
       state.isAdmin = localStorage.getItem('eduspace_admin') === 'true';
-
-      try {
-        const res = await fetch(API_URL);
-        if (res.ok) {
-          const apiData = await res.json();
-          if (apiData && apiData.subjects && apiData.subjects.length > 0) {
-            state.data = apiData;
-            localStorage.setItem('eduspace_data', JSON.stringify(state.data));
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn("Erreur API ou Hors Ligne, chargement depuis LocalStorage:", err);
-      }
 
       const saved = localStorage.getItem('eduspace_data');
       if (saved) {
         try {
           state.data = JSON.parse(saved);
+
+          // Force update for Finance Chap 1 to ensure all 52 flashcards are active
+          const finSub = state.data.subjects?.find(s => s.id === 'sub_finance');
+          const finChap1 = finSub?.chapters?.find(c => c.id === 'chap_fin_1');
+          if (finChap1 && finChap1.resources) {
+            if (!finChap1.resources.course) finChap1.resources.course = {};
+            finChap1.resources.course.title = 'Chapitre 1 - Fondements mathématiques de la finance (Cours IHEC 2026-2027)';
+            finChap1.resources.course.url = CHAP1_FINANCE_DRIVE_URL;
+            finChap1.resources.course.htmlContent = CHAP1_FINANCE_HTML_COURSE;
+            finChap1.resources.flashcards = CHAP1_FINANCE_FLASHCARDS;
+          }
         } catch (e) {
           state.data = DEFAULT_DATA;
         }
@@ -559,24 +687,8 @@
       }
     }
 
-    async function saveStateToStorage() {
+    function saveStateToStorage() {
       localStorage.setItem('eduspace_data', JSON.stringify(state.data));
-
-      if (state.isAdmin && API_URL) {
-        try {
-          // Google Apps Script requires text/plain or no-cors mode for cross-origin POST requests without CORS preflight failures
-          await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-              'Content-Type': 'text/plain;charset=utf-8'
-            },
-            body: JSON.stringify(state.data)
-          });
-        } catch (e) {
-          console.warn("Synchronisation Google Sheets non disponible. Données sauvegardées en local.", e);
-        }
-      }
     }
 
     // --- NAVIGATION ---
@@ -674,7 +786,7 @@
           ` : ''}
         </div>
 
-        <div id="subjectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="subjectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
       `;
 
       const grid = wrapper.querySelector('#subjectsGrid');
@@ -773,13 +885,13 @@
 
       if (!subject.chapters || subject.chapters.length === 0) {
         list.className = "py-12 text-center text-notion-textMuted text-sm";
-        list.innerHTML = "Aucun chapitre dans cette matière.";
+        list.innerHTML = "Aucun chapitre dans cette matière pour le moment.";
         return wrapper;
       }
 
       subject.chapters.forEach((chap, idx) => {
         const fcCount = chap.resources?.flashcards?.length || 0;
-        const hasCourse = !!chap.resources?.course?.url;
+        const hasCourse = !!(chap.resources?.course?.url || chap.resources?.course?.htmlContent);
         const hasEx = !!chap.resources?.exercises?.url;
         const hasCorr = !!chap.resources?.correction?.url;
 
@@ -825,7 +937,7 @@
       return wrapper;
     }
 
-    // --- VIEW 3: CHAPTER DETAIL (PDF & FLASHCARDS) ---
+    // --- VIEW 3: CHAPTER DETAIL ---
     function renderChapterDetailView() {
       const subject = state.data.subjects.find(s => s.id === state.selectedSubjectId);
       const chap = subject?.chapters.find(c => c.id === state.selectedChapterId);
@@ -846,7 +958,7 @@
           <!-- TAB NAVIGATION -->
           <div class="flex items-center gap-2 mt-6 overflow-x-auto pb-1 border-b border-notion-border">
             <button onclick="switchTab('course')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'course' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
-              <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Cours PDF
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Cours
             </button>
             <button onclick="switchTab('flashcards')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'flashcards' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
               <i data-lucide="layers" class="w-3.5 h-3.5"></i> Flashcards (${chap.resources?.flashcards?.length || 0})
@@ -855,7 +967,7 @@
               <i data-lucide="dumbbell" class="w-3.5 h-3.5"></i> Série d'exercices
             </button>
             <button onclick="switchTab('correction')" class="px-3 py-2 text-xs font-medium rounded-lg transition flex items-center gap-2 shrink-0 ${state.activeTab === 'correction' ? 'bg-notion-text text-white' : 'text-notion-textMuted hover:bg-notion-hover hover:text-notion-text'}">
-              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Correction PDF
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Correction
             </button>
           </div>
         </div>
@@ -881,13 +993,14 @@
       renderApp();
     }
 
-    // --- TAB 1: PDF VIEWER ---
+    // --- TAB 1: PDF / COURSE VIEWER ---
     function renderPdfTab(subjectId, chap, resourceType) {
       const container = document.createElement('div');
       container.className = "space-y-4";
 
       const res = chap.resources ? chap.resources[resourceType] : null;
       const pdfUrl = res ? res.url : '';
+      const htmlContent = res ? res.htmlContent : null;
       const title = res?.title || (resourceType === 'course' ? 'Cours' : resourceType === 'exercises' ? 'Exercices' : 'Correction');
 
       const header = document.createElement('div');
@@ -899,18 +1012,18 @@
         </div>
         <div class="flex items-center gap-2">
           ${pdfUrl ? `
-            <a href="${pdfUrl}" target="_blank" download class="px-3 py-1.5 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover transition flex items-center gap-1 text-notion-text">
-              <i data-lucide="download" class="w-3.5 h-3.5"></i> Télécharger
+            <a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-notion-border hover:bg-notion-hover transition flex items-center gap-1 text-notion-text">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Ouvrir sur Google Drive
             </a>
           ` : ''}
 
           ${state.isAdmin ? `
             <button onclick="openResourceModal('${subjectId}', '${chap.id}', '${resourceType}')" class="px-3 py-1.5 text-xs font-semibold text-white bg-notion-text rounded-lg hover:opacity-90 transition flex items-center gap-1">
-              <i data-lucide="upload" class="w-3.5 h-3.5"></i> ${pdfUrl ? 'Remplacer' : 'Importer'}
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> ${(pdfUrl || htmlContent) ? 'Remplacer' : 'Importer'}
             </button>
-            ${pdfUrl ? `
+            ${(pdfUrl || htmlContent) ? `
               <button onclick="confirmDeletePdf('${subjectId}', '${chap.id}', '${resourceType}')" title="Supprimer ce PDF" class="px-3 py-1.5 text-xs font-semibold text-notion-redText bg-notion-redBg hover:opacity-90 rounded-lg transition flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Supprimer PDF
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Supprimer
               </button>
             ` : ''}
           ` : ''}
@@ -921,12 +1034,20 @@
       const viewer = document.createElement('div');
       viewer.className = "w-full rounded-2xl border border-notion-border bg-white overflow-hidden shadow-xs";
 
-      if (pdfUrl) {
+      // Embed Google Drive viewer preview
+      let formattedPdfUrl = pdfUrl;
+      if (pdfUrl && pdfUrl.includes('drive.google.com')) {
+        formattedPdfUrl = pdfUrl.replace(/\/view(\?.*)?$/, '/preview');
+      }
+
+      if (formattedPdfUrl) {
         viewer.innerHTML = `
           <div class="w-full h-[650px] relative bg-notion-bg">
-            <iframe src="${pdfUrl}" class="w-full h-full border-0" title="Visionneuse PDF"></iframe>
+            <iframe src="${formattedPdfUrl}" class="w-full h-full border-0" allow="autoplay" title="Visionneuse PDF Google Drive"></iframe>
           </div>
         `;
+      } else if (htmlContent) {
+        viewer.innerHTML = htmlContent;
       } else {
         viewer.innerHTML = `
           <div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
@@ -934,7 +1055,7 @@
               <i data-lucide="file-x" class="w-6 h-6"></i>
             </div>
             <div>
-              <p class="text-sm font-medium text-notion-text">Aucun document PDF associé</p>
+              <p class="text-sm font-medium text-notion-text">Aucun document associé</p>
               <p class="text-xs text-notion-textMuted mt-1">Téléversez un fichier PDF depuis l'espace Admin.</p>
             </div>
             ${state.isAdmin ? `
@@ -950,7 +1071,7 @@
       return container;
     }
 
-    // --- TAB 2: FLASHCARDS INTERFACE (DESIGN MINIMALISTE MODERNE & DYNAMIQUE) ---
+    // --- TAB 2: FLASHCARDS INTERFACE ---
     function renderFlashcardsTab(subjectId, chap) {
       const container = document.createElement('div');
       container.className = "space-y-6 max-w-7xl mx-auto";
@@ -959,7 +1080,6 @@
       const sub = state.data.subjects.find(s => s.id === subjectId);
       const subjectName = (sub ? sub.name : 'MATIÈRE').toUpperCase();
 
-      // Top Control Bar
       const topBar = document.createElement('div');
       topBar.className = "flex items-center justify-between bg-white p-3.5 border border-notion-border rounded-2xl text-xs gap-3 shadow-xs";
       topBar.innerHTML = `
@@ -1008,7 +1128,6 @@
       deck.className = "space-y-6";
 
       deck.innerHTML = `
-        <!-- NAVIGATION HEADER & PROGRESS -->
         <div class="flex items-center justify-between text-xs font-semibold text-fc-navy px-1">
           <div class="flex items-center gap-2">
             <span class="bg-fc-navy text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold tracking-wider">${cardNumberFormatted} / ${String(total).padStart(2, '0')}</span>
@@ -1023,34 +1142,24 @@
           <div class="h-full bg-gradient-to-r from-fc-yellow via-fc-coral to-fc-mint transition-all duration-300" style="width: ${((state.currentFcIndex + 1) / total) * 100}%"></div>
         </div>
 
-        <!-- FLASHCARDS CONTAINER (DESKTOP: SIDE-BY-SIDE / MOBILE: FLIP CARD) -->
-        
-        <!-- 1. DESKTOP & TABLET LANDSCAPE VIEW (Side by Side 16:10 Ratio, Max Width 1200px) -->
         <div class="hidden lg:grid grid-cols-2 gap-6 max-w-[1200px] mx-auto w-full">
           ${renderSingleCardHTML('recto', current, subjectName, cardNumberFormatted)}
           ${renderSingleCardHTML('verso', current, subjectName, cardNumberFormatted)}
         </div>
 
-        <!-- 2. MOBILE & PORTRAIT VIEW (Animated Flip Card 4:5 / 5:6 Ratio) -->
         <div class="block lg:hidden max-w-md mx-auto w-full">
           <div class="perspective-1000 w-full min-h-[440px] cursor-pointer group" onclick="toggleFlipCard()">
             <div id="flashcardInner" class="relative w-full h-full duration-500 transform-style-3d ${state.isFcFlipped ? 'rotate-y-180' : ''}">
-              
-              <!-- RECTO PORTRAIT -->
               <div class="absolute inset-0 w-full h-full backface-hidden">
                 ${renderSingleCardHTML('recto', current, subjectName, cardNumberFormatted, true)}
               </div>
-
-              <!-- VERSO PORTRAIT -->
               <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
                 ${renderSingleCardHTML('verso', current, subjectName, cardNumberFormatted, true)}
               </div>
-
             </div>
           </div>
         </div>
 
-        <!-- CONTROLS ROW -->
         <div class="flex items-center justify-between gap-3 max-w-md lg:max-w-xl mx-auto pt-2">
           <button onclick="prevFlashcard()" ${state.currentFcIndex === 0 ? 'disabled' : ''} class="flex-1 py-3 px-4 rounded-2xl border border-notion-border bg-white font-semibold text-xs text-fc-navy hover:bg-notion-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-xs">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Précédente
@@ -1081,104 +1190,47 @@
       return container;
     }
 
-    // --- CARD HTML RENDERER (VERSO & RECTO WITH VISUAL DESIGN RULES) ---
     function renderSingleCardHTML(type, cardData, subjectName, cardNum, isMobile = false) {
       const isRecto = type === 'recto';
-      
       const bgColor = isRecto ? 'bg-[#FFFCF5]' : 'bg-[#F4FFF9]';
-      const cornerDeco1 = isRecto 
-        ? '<div class="absolute top-0 right-0 w-24 h-24 bg-fc-coral/15 rounded-bl-full pointer-events-none"></div>'
-        : '<div class="absolute top-0 right-0 w-24 h-24 bg-fc-mint/25 rounded-bl-full pointer-events-none"></div>';
-      
-      const cornerDeco2 = isRecto
-        ? '<div class="absolute bottom-0 left-0 w-20 h-20 bg-fc-yellow/20 rounded-tr-full pointer-events-none"></div>'
-        : '<div class="absolute bottom-0 left-0 w-20 h-20 bg-fc-violet/20 rounded-tr-full pointer-events-none"></div>';
 
       return `
-        <div class="relative ${bgColor} border border-notion-border/80 rounded-[28px] p-6 sm:p-7 flex flex-col justify-between shadow-sm min-h-[420px] sm:min-h-[460px] aspect-[16/10] sm:aspect-auto overflow-hidden text-fc-navy transition duration-200 hover:shadow-md">
-          
-          ${cornerDeco1}
-          ${cornerDeco2}
-
-          <!-- HEADER CARD -->
+        <div class="relative ${bgColor} border border-notion-border/80 rounded-[28px] p-6 sm:p-7 flex flex-col justify-between shadow-sm min-h-[420px] sm:min-h-[460px] overflow-hidden text-fc-navy">
           <div class="flex items-center justify-between z-10 relative">
-            <span class="text-[10px] font-extrabold tracking-wider px-3 py-1 rounded-full bg-notion-hover/80 text-fc-navy border border-notion-border/50 uppercase">
+            <span class="text-[10px] font-extrabold tracking-wider px-3 py-1 rounded-full bg-notion-hover/80 text-fc-navy uppercase">
               ${escapeHtml(subjectName)}
             </span>
-
-            <div class="flex items-center gap-2">
-              ${!isRecto ? `
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-fc-emerald/15 text-fc-emerald">
-                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Réponse
-                </span>
-              ` : `
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-fc-yellow/30 text-fc-navy">
-                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-fc-navy"></i> Question
-                </span>
-              `}
-              <span class="text-xs font-bold text-fc-navy/60 bg-white/80 px-2.5 py-0.5 rounded-full border border-notion-border/40">
-                ${cardNum}
-              </span>
-            </div>
+            <span class="text-xs font-bold text-fc-navy/60 bg-white/80 px-2.5 py-0.5 rounded-full border border-notion-border/40">
+              ${cardNum}
+            </span>
           </div>
 
-          <!-- CARD CONTENT -->
           <div class="my-auto z-10 relative space-y-4 py-2">
             ${isRecto ? `
-              <!-- RECTO QUESTION -->
-              <div class="relative">
-                <p class="text-xl sm:text-2xl lg:text-2xl font-bold leading-snug text-fc-navy text-center px-2">
-                  ${escapeHtml(cardData.question)}
-                </p>
-              </div>
+              <p class="text-xl sm:text-2xl font-bold leading-snug text-fc-navy text-center px-2">
+                ${escapeHtml(cardData.question)}
+              </p>
             ` : `
-              <!-- VERSO ANSWER -->
               <div class="space-y-3">
                 <p class="text-base sm:text-lg font-semibold leading-relaxed text-fc-navy">
                   ${escapeHtml(cardData.answer)}
                 </p>
-
                 ${cardData.remember ? `
-                  <!-- À RETENIR BLOC -->
                   <div class="bg-fc-rememberBg border border-fc-mint/40 rounded-2xl p-3.5 flex items-start gap-3 mt-3">
-                    <div class="p-1.5 bg-fc-mint text-fc-navy rounded-xl shrink-0 mt-0.5">
-                      <i data-lucide="target" class="w-4 h-4"></i>
-                    </div>
+                    <div class="p-1.5 bg-fc-mint text-fc-navy rounded-xl shrink-0 mt-0.5"><i data-lucide="target" class="w-4 h-4"></i></div>
                     <div>
                       <h4 class="text-xs font-bold text-fc-navy uppercase tracking-wider mb-0.5">À retenir</h4>
                       <p class="text-xs font-medium text-fc-navy/90 leading-relaxed">${escapeHtml(cardData.remember)}</p>
                     </div>
                   </div>
                 ` : ''}
-
-                ${cardData.example ? `
-                  <!-- EXEMPLE OU FORMULE BLOC -->
-                  <div class="bg-fc-secondaryBg/80 border border-notion-border/60 rounded-xl p-3 text-xs font-mono text-fc-navy/90 flex items-center gap-2">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-fc-coral shrink-0"></i>
-                    <span>${escapeHtml(cardData.example)}</span>
-                  </div>
-                ` : ''}
               </div>
             `}
           </div>
 
-          <!-- FOOTER / DECORATIONS & HINTS -->
           <div class="flex items-center justify-between text-[11px] text-fc-navy/60 z-10 relative pt-2 border-t border-fc-navy/5">
-            ${isRecto ? `
-              <span class="flex items-center gap-1.5 font-medium">
-                <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-fc-yellow"></i> Réfléchis avant de retourner !
-              </span>
-              <div class="flex items-center gap-1 text-fc-coral">
-                <i data-lucide="sparkle" class="w-3 h-3"></i>
-              </div>
-            ` : `
-              <span class="flex items-center gap-1.5 font-semibold text-fc-emerald">
-                <i data-lucide="thumbs-up" class="w-3.5 h-3.5"></i> Bien joué !
-              </span>
-              <span class="text-[10px] text-notion-textMuted font-medium">EduSpace Flashcards</span>
-            `}
+            <span class="font-medium">${isRecto ? 'Question' : 'Réponse'}</span>
           </div>
-
         </div>
       `;
     }
@@ -1356,13 +1408,13 @@
 
     function confirmDeletePdf(subjectId, chapterId, resourceType) {
       openConfirmModal(
-        "Supprimer le PDF ?",
-        "Êtes-vous sûr de vouloir supprimer ce document PDF ?",
+        "Supprimer le cours ?",
+        "Êtes-vous sûr de vouloir supprimer ce cours ?",
         () => {
           const sub = state.data.subjects.find(s => s.id === subjectId);
           const chap = sub?.chapters.find(c => c.id === chapterId);
           if (chap && chap.resources && chap.resources[resourceType]) {
-            chap.resources[resourceType] = { title: '', url: '' };
+            chap.resources[resourceType] = { title: '', url: '', htmlContent: null };
             saveStateToStorage();
             renderApp();
           }
@@ -1385,18 +1437,6 @@
             saveStateToStorage();
             renderApp();
           }
-        }
-      );
-    }
-
-    function confirmResetAll() {
-      openConfirmModal(
-        "Réinitialiser toutes les données ?",
-        "Attention : cette action supprimera toutes vos modifications et réinitialisera l'application avec les données par défaut.",
-        () => {
-          state.data = DEFAULT_DATA;
-          saveStateToStorage();
-          renderApp();
         }
       );
     }
@@ -1654,16 +1694,6 @@
     function escapeHtml(str) {
       if (!str) return '';
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.data, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "eduspace_backup.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
     }
   </script>
 </body>
